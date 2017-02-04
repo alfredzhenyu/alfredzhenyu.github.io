@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>Objc的Runtime源码解读（一）之isa指针 | Alfredzhenyu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="目录：
+
+isa指针
+objc_object和objc_class结构体
+isa指针的作用
+isa_t结构体">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Objc的Runtime源码解读（一）之isa指针">
+<meta property="og:url" content="http://alfredzhenyu.github.io/2017/01/09/Objc的Runtime源码解读（一）之isa指针/index.html">
+<meta property="og:site_name" content="Alfredzhenyu">
+<meta property="og:description" content="目录：
+
+isa指针
+objc_object和objc_class结构体
+isa指针的作用
+isa_t结构体">
+<meta property="og:image" content="http://alfredzhenyu.github.io/objc-isa-class-diagram.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/objc-isa-isat.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/objc-isa-isat-bits.png">
+<meta property="og:updated_time" content="2017-01-10T04:35:48.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Objc的Runtime源码解读（一）之isa指针">
+<meta name="twitter:description" content="目录：
+
+isa指针
+objc_object和objc_class结构体
+isa指针的作用
+isa_t结构体">
+<meta name="twitter:image" content="http://alfredzhenyu.github.io/objc-isa-class-diagram.png">
+    
+
+    
+        <link rel="alternate" href="/" title="Alfredzhenyu" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Alfredzhenyu</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.png" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Buscar" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Entradas',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categorias',
+            TAGS: 'Etiquetas',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Buscar" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.png" />
+            <h2 id="name">PPOffice</h2>
+            <h3 id="title">Web Developer &amp; Designer</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>Harbin, China</span>
+            <a id="follow" target="_blank" href="https://github.com/ppoffice/">SEGUIR</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                12
+                <span>Entradas</span>
+            </div>
+            <div class="article-info-block">
+                11
+                <span>Etiquetas</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="http://github.com/ppoffice/hexo-theme-icarus" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="twitter" class=tooltip>
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="facebook" class=tooltip>
+                            <i class="fa fa-facebook"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="dribbble" class=tooltip>
+                            <i class="fa fa-dribbble"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="rss" class=tooltip>
+                            <i class="fa fa-rss"></i>
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-Objc的Runtime源码解读（一）之isa指针" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Objc的Runtime源码解读（一）之isa指针
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2017/01/09/Objc的Runtime源码解读（一）之isa指针/">
+            <time datetime="2017-01-09T02:22:43.000Z" itemprop="datePublished">2017-01-09</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/iOS/">iOS</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Objc/">Objc</a>, <a class="tag-link" href="/tags/iOS/">iOS</a>, <a class="tag-link" href="/tags/源码解析/">源码解析</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <p>目录：</p>
+<ul>
+<li>isa指针<ul>
+<li><code>objc_object</code>和<code>objc_class</code>结构体</li>
+<li><code>isa</code>指针的作用</li>
+<li><code>isa_t</code>结构体</li>
+</ul>
+</li>
+</ul>
+<hr>
+<a id="more"></a>
+<h2 id="objc-object和objc-class结构体"><a href="#objc-object和objc-class结构体" class="headerlink" title="objc_object和objc_class结构体"></a><code>objc_object</code>和<code>objc_class</code>结构体</h2><ul>
+<li><p>ObjC都是C语言结构体，所有对象都包含一个类型为isa_t的isa指针</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_object &#123;</div><div class="line">    <span class="keyword">isa_t</span> isa;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>所有继承自NSObject的类的实例化后的对象都会包含一个类型为isa_t的结构体​</p>
+</li>
+<li><p>在ObjC的Class定义为一个名为<code>objc_class</code> 的结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_class : objc_object &#123;</div><div class="line">    <span class="keyword">isa_t</span> isa;</div><div class="line">    Class superclass;</div><div class="line">    <span class="keyword">cache_t</span> cache;</div><div class="line">    <span class="keyword">class_data_bits_t</span> bits;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>可以看出<code>objc_class</code> 结构体是继承自 <code>objc_object</code> 的，所有的类也有一个isa，所以Objc中的类本身也是一个对象</p>
+</li>
+</ul>
+<h2 id="isa指针的作用"><a href="#isa指针的作用" class="headerlink" title="isa指针的作用"></a>isa指针的作用</h2><p>首先对象的方法（实例方法、类方法）是不存储在对象的结构体中的，不然创建同一个类的不同对象会造成内存的冗余，所以：</p>
+<ul>
+<li><strong>当实例方法被调用时，会通过对象的isa来查找对应的类，然后在<code>class_data_bits_t</code> 结构体中查找对应方法的实现，同时使用 <code>super_class</code> 来查找继承的类，进而找到继承的方法</strong></li>
+<li><strong>当类方法被调用时，会通过类的isa来查找对应的元类，然后在元类查找对应类方法的实现，以保证通过相同的机制来查找方法的实现</strong></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//<span class="doctag">TODO:</span>元类和类共用一套实现代码，怎样通过类方法查找类方法的</span></div></pre></td></tr></table></figure>
+<p><img src="objc-isa-class-diagram.png" alt=""></p>
+<p>上图是各个对象的isa的指向图，这里需要注意的是，在64位以后才有的isa_t类型这个结构体，需要通过一定的处理才能得到他需要指向的对象，而在64位以前是isa类型，单纯的指向它需要的对象，下面会讲到。</p>
+<p>​</p>
+<h2 id="isa-t结构体"><a href="#isa-t结构体" class="headerlink" title="isa_t结构体"></a>isa_t结构体</h2><ul>
+<li><p>源码定义：</p>
+<ul>
+<li>x86_64:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">#define ISA_MASK        0x00007ffffffffff8ULL</div><div class="line">#define ISA_MAGIC_MASK  0x001f800000000001ULL</div><div class="line">#define ISA_MAGIC_VALUE 0x001d800000000001ULL</div><div class="line">#define RC_ONE   (1ULL&lt;&lt;56)</div><div class="line">#define RC_HALF  (1ULL&lt;&lt;7)</div><div class="line"></div><div class="line">union isa_t &#123;</div><div class="line">    isa_t() &#123; &#125;</div><div class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125;</div><div class="line"></div><div class="line">    Class cls;</div><div class="line">    uintptr_t bits;</div><div class="line"></div><div class="line">    struct &#123;</div><div class="line">        uintptr_t indexed           : 1;</div><div class="line">        uintptr_t has_assoc         : 1;</div><div class="line">        uintptr_t has_cxx_dtor      : 1;</div><div class="line">        uintptr_t shiftcls          : 44;</div><div class="line">        uintptr_t magic             : 6;</div><div class="line">        uintptr_t weakly_referenced : 1;</div><div class="line">        uintptr_t deallocating      : 1;</div><div class="line">        uintptr_t has_sidetable_rc  : 1;</div><div class="line">        uintptr_t extra_rc          : 8;</div><div class="line">    &#125;;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<ul>
+<li>arm64:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">#define ISA_MASK        0x0000000ffffffff8ULL</div><div class="line">#define ISA_MAGIC_MASK  0x000003f000000001ULL</div><div class="line">#define ISA_MAGIC_VALUE 0x000001a000000001ULL</div><div class="line">#define RC_ONE   (1ULL&lt;&lt;45)</div><div class="line">#define RC_HALF  (1ULL&lt;&lt;18)</div><div class="line">union isa_t &#123;</div><div class="line">    isa_t() &#123; &#125;</div><div class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125;</div><div class="line"></div><div class="line">    Class cls;</div><div class="line">    uintptr_t bits;</div><div class="line"></div><div class="line">    struct &#123;</div><div class="line">       uintptr_t indexed           : 1;</div><div class="line">       uintptr_t has_assoc         : 1;</div><div class="line">       uintptr_t has_cxx_dtor      : 1;</div><div class="line">       uintptr_t shiftcls          : 33;</div><div class="line">       uintptr_t magic             : 6;</div><div class="line">       uintptr_t weakly_referenced : 1;</div><div class="line">       uintptr_t deallocating      : 1;</div><div class="line">       uintptr_t has_sidetable_rc  : 1;</div><div class="line">       uintptr_t extra_rc          : 19;</div><div class="line">    &#125;;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>（MacOS，虚拟机是x86_64，而iOS是arm64）</p>
+<p>可以看出不同的架构上，字段是一样的，只不过位数和实现上有些差别，这里统一用x86的来讲解</p>
+</li>
+<li><p><code>isa_t</code> 是一个 <code>union</code> 类型的结构体。其中的 <code>isa_t</code>、<code>cls</code>、 <code>bits</code> 还有结构体共用同一块地址空间。而实际上 <code>isa</code> 总共会占据 64 位的内存空间，可以从<code>bits</code>看出来</p>
+<p><img src="objc-isa-isat.png" alt=""></p>
+</li>
+<li><p>下面我们从初始化的过程来看这64位每一位的意义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">inline</span> <span class="keyword">void</span> </div><div class="line">objc_object::initInstanceIsa(Class cls, <span class="keyword">bool</span> hasCxxDtor)</div><div class="line">&#123;</div><div class="line">    initIsa(cls, <span class="literal">true</span>, hasCxxDtor);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">inline</span> <span class="keyword">void</span> </div><div class="line">objc_object::initIsa(Class cls, <span class="keyword">bool</span> indexed, <span class="keyword">bool</span> hasCxxDtor) </div><div class="line">&#123; </div><div class="line">    <span class="keyword">if</span> (!indexed) &#123;</div><div class="line">        isa.cls = cls;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        isa.bits = ISA_MAGIC_VALUE;</div><div class="line">        isa.has_cxx_dtor = hasCxxDtor;</div><div class="line">        isa.shiftcls = (<span class="keyword">uintptr_t</span>)cls &gt;&gt; <span class="number">3</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>对整个 <code>isa</code> 的值 <code>bits</code> 进行设置，传入 <code>ISA_MAGIC_VALUE</code>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> ISA_MAGIC_VALUE 0x001d800000000001ULL</span></div></pre></td></tr></table></figure>
+<p><img src="objc-isa-isat-bits.png" alt=""></p>
+<p>可以看出实际上设置的是<code>indexed</code>以及<code>magic</code>这两个字段</p>
+</li>
+<li><p><code>indexed</code>表示<code>isa_t</code>类型：</p>
+<ul>
+<li>0在迁移到64位之前的时候使用，这时候的isa是没有struct部分，通过object-&gt;isa得到的是cls的指针（那时不是isa_t类型，而是isa类型）</li>
+<li>1在迁移到64位之后的时候使用，这时候的isa增加了struct部分，通过object-&gt;isa得到的是64位的bits值（需要用<code>shiftcls</code>位的偏移来获取cls的指针）</li>
+</ul>
+</li>
+<li><p><code>magic</code>的值为0x3b用于调试器判断当前对象是真的对象还是没初始化的空间</p>
+<blockquote>
+<p>TODO: magic值具体怎么判断当前对象的</p>
+</blockquote>
+</li>
+<li><p><code>has_cxx_dtor</code>实际上也是64位中的1位，表示当前对象时候有C++、ObjC的析构器</p>
+</li>
+<li><p><code>shiftcls</code>就是类指针，因为类指针规定要按照字节（8bit）对齐内存，所以后三位bit为000（可以输出[NSObject class]指针看下），这里为了减小内存消耗，特意右移3位写进shiftcls内，这个字段就相当于64位以前的isa类型指针，遵循上面的指向图</p>
+<p>【同时可以打印对象指针，可以发现对象内存地址的后四位都是0，说明ObjC在初始化内存时是以16字节对齐的，分配的内存地址后四位都是0】</p>
+<p>注意：</p>
+<p>由于改版至64位，不可以通过object-&gt;isa直接获取cls指针，所以新增了ISA()方法来获取</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> ISA_MASK 0x00007ffffffffff8ULL</span></div><div class="line"><span class="keyword">inline</span> Class </div><div class="line">objc_object::ISA() </div><div class="line">&#123;</div><div class="line">    <span class="keyword">return</span> (Class)(isa.bits &amp; ISA_MASK);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>​</p>
+</li>
+<li><p>其他bits</p>
+<p>在 <code>isa_t</code> 中，我们还有一些没有介绍的其它 bits，在这个小结就简单介绍下这些 bits 的作用</p>
+<ul>
+<li><code>has_assoc</code>对象含有或者曾经含有关联引用，没有关联引用的可以更快地释放内存</li>
+<li><code>weakly_referenced</code>对象被指向或者曾经指向一个 ARC 的弱变量，没有弱引用的对象可以更快释放</li>
+<li><code>deallocating</code>对象正在释放内存</li>
+<li><code>has_sidetable_rc</code>对象的引用计数太大了，存不下</li>
+<li><code>extra_rc</code>对象的引用计数超过 1，会存在这个这个里面，如果引用计数为 10，<code>extra_rc</code> 的值就为 9</li>
+</ul>
+</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><p><a href="https://github.com/Draveness/iOS-Source-Code-Analyze/blob/master/contents/objc/%E4%BB%8E%20NSObject%20%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BA%86%E8%A7%A3%20isa.md#ISA" target="_blank" rel="external">Draveness的github</a></p>
+</li>
+<li><p><a href="https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtHowMessagingWorks.html" target="_blank" rel="external">Objective-C Runtime Programming Guide</a></p>
+</li>
+<li><p><a href="http://www.cocoawithlove.com/2010/01/what-is-meta-class-in-objective-c.html" target="_blank" rel="external">What is a meta-class in Objective-C?</a></p>
+</li>
+<li><p><a href="http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html" target="_blank" rel="external">objc_explain_Classes_and_metaclasses</a></p>
+</li>
+<li><p><a href="http://stackoverflow.com/questions/18997362/storing-things-in-isa" target="_blank" rel="external">Storing things in isa</a></p>
+</li>
+<li><p><a href="http://stackoverflow.com/questions/252552/why-do-we-need-c-unions" target="_blank" rel="external">Why do we need C Unions?</a></p>
+</li>
+<li><p><a href="http://www.sealiesoftware.com/blog/archive/2013/09/24/objc_explain_Non-pointer_isa.html" target="_blank" rel="external">objc_explain_Non-pointer_isa</a></p>
+</li>
+<li><p><a href="https://en.wikipedia.org/wiki/Tagged_pointer" target="_blank" rel="external">Tagged Pointer</a></p>
+</li>
+<li><p><a href="https://www.mikeash.com/pyblog/friday-qa-2013-09-27-arm64-and-you.html" target="_blank" rel="external">ARM64 and You</a></p>
+</li>
+<li><p><a href="http://blog.xcodev.com/posts/tagged-pointer-and-64-bit/" target="_blank" rel="external">64位与Tagged Pointer</a></p>
+<p>​</p>
+</li>
+</ul>
+
+        
+        </div>
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="http://alfredzhenyu.github.io/2017/01/09/Objc的Runtime源码解读（一）之isa指针/" data-id="ciyqla34e0007hf7dwvn4f2x4" class="article-share-link"><i class="fa fa-share"></i>Compartir</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+        <a href="http://alfredzhenyu.github.io/2017/01/09/Objc的Runtime源码解读（一）之isa指针/#comments" class="article-comment-link disqus-comment-count" data-disqus-url="http://alfredzhenyu.github.io/2017/01/09/Objc的Runtime源码解读（一）之isa指针/">Comentarios</a>
+    
+
+        </footer>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Más nuevo</strong>
+            <div class="article-nav-title">
+                
+                    Objc的Runtime源码解读（二）之方法的存储
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2017/01/06/CoreFoundation源码解读之CFArray/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Más viejo</strong>
+            <div class="article-nav-title">CoreFoundation源码解读之CFArray</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+</section>
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Recientes</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/13/iOS开发黑科技之Xcode多Target开发/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/13/iOS开发黑科技之Xcode多Target开发/" class="title">iOS开发黑科技之Xcode多Target开发</a></p>
+                            <p class="item-date"><time datetime="2017-01-13T02:39:45.000Z" itemprop="datePublished">2017-01-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/" class="title">Objc的Runtime源码解读（三）之消息（Messaging）机制</a></p>
+                            <p class="item-date"><time datetime="2017-01-11T08:54:46.000Z" itemprop="datePublished">2017-01-11</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/" class="title">Objc的Runtime源码解读（二）之方法的存储</a></p>
+                            <p class="item-date"><time datetime="2017-01-09T08:50:25.000Z" itemprop="datePublished">2017-01-09</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/09/Objc的Runtime源码解读（一）之isa指针/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/09/Objc的Runtime源码解读（一）之isa指针/" class="title">Objc的Runtime源码解读（一）之isa指针</a></p>
+                            <p class="item-date"><time datetime="2017-01-09T02:22:43.000Z" itemprop="datePublished">2017-01-09</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/06/CoreFoundation源码解读之CFArray/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/06/CoreFoundation源码解读之CFArray/" class="title">CoreFoundation源码解读之CFArray</a></p>
+                            <p class="item-date"><time datetime="2017-01-06T08:10:17.000Z" itemprop="datePublished">2017-01-06</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Categorias</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/iOS/">iOS</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/总结/">总结</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/生活/">生活</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/网络/">网络</a><span class="category-list-count">5</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Archivos</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">December 2016</a><span class="archive-list-count">6</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Etiquetas</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/">HTTP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTPS/">HTTPS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Objc/">Objc</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSL-TLS/">SSL/TLS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/">TCP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Xcode/">Xcode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iOS/">iOS</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/总结/">总结</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/源码解析/">源码解析</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">5</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Nube de etiquetas</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/HTTP/" style="font-size: 13.33px;">HTTP</a> <a href="/tags/HTTPS/" style="font-size: 10px;">HTTPS</a> <a href="/tags/Objc/" style="font-size: 16.67px;">Objc</a> <a href="/tags/SSL-TLS/" style="font-size: 10px;">SSL/TLS</a> <a href="/tags/TCP/" style="font-size: 13.33px;">TCP</a> <a href="/tags/Xcode/" style="font-size: 10px;">Xcode</a> <a href="/tags/iOS/" style="font-size: 20px;">iOS</a> <a href="/tags/总结/" style="font-size: 10px;">总结</a> <a href="/tags/源码解析/" style="font-size: 16.67px;">源码解析</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a> <a href="/tags/网络/" style="font-size: 20px;">网络</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">Links</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2017 Alfred<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_config = function () {
+        
+            this.page.url = 'http://alfredzhenyu.github.io/2017/01/09/Objc的Runtime源码解读（一）之isa指针/';
+        
+        this.page.identifier = 'Objc的Runtime源码解读（一）之isa指针';
+    };
+    (function() { 
+        var d = document, s = d.createElement('script');  
+        s.src = '//' + 'hexo-theme-icarus' + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

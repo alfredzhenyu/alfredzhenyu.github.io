@@ -1,1 +1,0 @@
-{"cron":[{"description":"weekly cleanup job","url":"/reset_database","schedule":"every sunday 00:00","timezone":"America/Los_Angeles"}]}

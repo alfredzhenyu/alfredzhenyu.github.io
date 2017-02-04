@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>《Web性能权威指南》读书笔记（三） | Alfredzhenyu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="目录：
+
+第一部分 网络技术概览
+第四章 传输层安全（TLS）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《Web性能权威指南》读书笔记（三）">
+<meta property="og:url" content="http://alfredzhenyu.github.io/2016/12/26/《Web性能权威指南》读书笔记（三）/index.html">
+<meta property="og:site_name" content="Alfredzhenyu">
+<meta property="og:description" content="目录：
+
+第一部分 网络技术概览
+第四章 传输层安全（TLS）">
+<meta property="og:image" content="http://alfredzhenyu.github.io/图4.1传输层安全TLS.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/图4.2TLS握手协议.png">
+<meta property="og:updated_time" content="2016-12-27T11:03:55.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="《Web性能权威指南》读书笔记（三）">
+<meta name="twitter:description" content="目录：
+
+第一部分 网络技术概览
+第四章 传输层安全（TLS）">
+<meta name="twitter:image" content="http://alfredzhenyu.github.io/图4.1传输层安全TLS.png">
+    
+
+    
+        <link rel="alternate" href="/" title="Alfredzhenyu" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Alfredzhenyu</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.png" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Buscar" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Entradas',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categorias',
+            TAGS: 'Etiquetas',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Buscar" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.png" />
+            <h2 id="name">PPOffice</h2>
+            <h3 id="title">Web Developer &amp; Designer</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>Harbin, China</span>
+            <a id="follow" target="_blank" href="https://github.com/ppoffice/">SEGUIR</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                12
+                <span>Entradas</span>
+            </div>
+            <div class="article-info-block">
+                11
+                <span>Etiquetas</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="http://github.com/ppoffice/hexo-theme-icarus" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="twitter" class=tooltip>
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="facebook" class=tooltip>
+                            <i class="fa fa-facebook"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="dribbble" class=tooltip>
+                            <i class="fa fa-dribbble"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="rss" class=tooltip>
+                            <i class="fa fa-rss"></i>
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-《Web性能权威指南》读书笔记（三）" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            《Web性能权威指南》读书笔记（三）
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2016/12/26/《Web性能权威指南》读书笔记（三）/">
+            <time datetime="2016-12-26T02:51:14.000Z" itemprop="datePublished">2016-12-26</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/网络/">网络</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/HTTPS/">HTTPS</a>, <a class="tag-link" href="/tags/SSL-TLS/">SSL/TLS</a>, <a class="tag-link" href="/tags/网络/">网络</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <p>目录：</p>
+<ul>
+<li>第一部分 网络技术概览<ul>
+<li>第四章 传输层安全（TLS）</li>
+</ul>
+</li>
+</ul>
+<hr>
+<a id="more"></a>
+<h2 id="第四章-传输层安全"><a href="#第四章-传输层安全" class="headerlink" title="第四章 传输层安全"></a>第四章 传输层安全</h2><p>个人的理解：HTTPS = TLS + HTTP<br><img src="图4.1传输层安全TLS.png" alt=""><br>so：理解TLS，在理解HTTPS中极为重要</p>
+<h3 id="TLS与SSL"><a href="#TLS与SSL" class="headerlink" title="TLS与SSL"></a>TLS与SSL</h3><p>SSL（Secure Sockets Layer，安全套接字）最初是为了保证网上交易安全而开发的一套安全协议，协议通过加密保护客户个人资料，通过认证和完整性检查来确保交易安全，SSL不会影响上层协议，但能保证上层协议的网络通信安全（HTTP、电子邮件、即时通讯）<br>TLS（Transport Layer Security， 传输层安全）：后来被IETF标准化SSL之后改了名字，实际上两者指的是同一个东西，只是在不同时间段，指代不同的协议版本<br>【TLS设计的初衷是在可靠的传输协议（TCP）之上运行的，可是有实现把它放在数据包协议（如UDP）上，形成DTLS（Datagram Transport Layer Security，数据报传输层安全，RFC 6437）旨在以TLS协议为基础，同时兼顾数据包交付模式并提供类似的安全保障】</p>
+<h3 id="基本服务"><a href="#基本服务" class="headerlink" title="基本服务"></a>基本服务</h3><p>TLS目标是在它之上的应用提供三个基本服务：</p>
+<ul>
+<li>加密 混淆数据的机制</li>
+<li>身份验证 验证身份标识有效性的机制</li>
+<li>完整性 检测消息是否被篡改或伪造的机制</li>
+</ul>
+<p>具体实现：<br><strong>密钥协商</strong>：TLS握手时会采用<strong>公钥密码系统（非对称密钥加密）</strong>的方式，让通信双方不必事先“认识”，即可商定共享的安全密钥<br><strong>身份验证</strong>：TLS时允许通信双方互相验明正身，可以通过相互提供认证证书来验证对方是否是它想联系的服务<br><strong>消息分帧</strong>：使用MAC算法（Message Authentication Code，消息认证码）签署每一条消息。<strong>MAC算法是一个单向加密的散列函数(本质上是一个校验和)，密钥由连接双方协商确定</strong>。只要发送TLS记录，就会生成一个MAC值并附加到该消息中。接收端通过计算和验证这个MAC值来判断消息的完整性和可靠性。</p>
+<h3 id="TLS握手"><a href="#TLS握手" class="headerlink" title="TLS握手"></a>TLS握手</h3><p><img src="图4.2TLS握手协议.png" alt=""><br>• 0 ms:TLS 在可靠的传输层(TCP)之上运行，这意味着首先必须完成 TCP 的“三次握手”，即一次完整的往返。<br>• 56 ms:TCP 连接建立之后，客户端再以纯文本形式发送一些规格说明，比如<strong>它所运行的 TLS 协议的版本、它所支持的加密套件列表，以及它支持或希望使用的另外一 些 TLS 选项</strong>。<br>• 84 ms:然后，服务器取得 TLS 协议版本以备将来通信使用，<strong>从客户端提供的加密套件列表中选择一个，再附上自己的证书【这里应该还有服务器给客户端的公钥，用于非对称加密】</strong>，将响应发送回客户端。作为可选项，<strong>服务器也可以发送一个请求，要求客户端提供证书以及其他 TLS 扩展参数</strong>。<br>• 112 ms:假设两端经过协商确定了共同的版本和加密套件，客户端也高高兴兴地<strong>把自己的证书提供给了服务器</strong>。然后，<strong>客户端会生成一个新的对称密钥，用服务器的公钥来加密，加密后发送给服务器，告诉服务器可以开始加密通信了</strong>。</p>
+<blockquote>
+<p><strong>到目前为止，除了用服务器公钥加密的新对称密钥之外，所有数据都以明文形式发送。</strong></p>
+</blockquote>
+<p>• 140 ms:最后，<strong>服务器解密出客户端发来的对称密钥</strong>，通过<strong>验证消息的 MAC 检测消息完整性，再返回给客户端一个加密的“Finished”消息</strong>。<br>• 168 ms:客户端用它之前生成的对称密钥解密这条消息，验证 MAC，如果一切顺利，则建立信道并开始发送应用数据。</p>
+<h4 id="加密"><a href="#加密" class="headerlink" title="加密"></a>加密</h4><p> 非对称加密：只在建立TLS信道的会话中使用<br> 对称加密：建立TLS之后会一直使用<br> 主要原因是顾及性能问题<br> 以最常用的RSA、AES加密方式为例子：在安装了OpenSSL的话使用以下命令查看<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$&gt; openssl speed rsa</div><div class="line">$&gt; openssl speed aes</div></pre></td></tr></table></figure></p>
+<p>可以看出AES需要3s左右完成一次加/解密<br>可以看出RSA需要10s左右完成一次加/解密</p>
+<p><strong>TODO：后续可能会针对加解密这块写些文章，毕竟客户端在于服务端交互的时候加解密是必不可少的</strong></p>
+<h4 id="应用层协议协商（ALPN）"><a href="#应用层协议协商（ALPN）" class="headerlink" title="应用层协议协商（ALPN）"></a>应用层协议协商（ALPN）</h4><p>网络上通信可以使用自定义的协议进行通信</p>
+<ul>
+<li>HTTP的话可以使用Upgrade机制 + 80端口来协商自定义协议</li>
+<li>HTTPS的话由于使用了TLS，除了可以使用HTTP的Upgrade机制来协商，还可以使用ALPN+443端口，在TLS握手时就把协商确定协议</li>
+</ul>
+<p><strong>ALPN</strong>：在客户端发送ClientHello的过程中增加一个新的字段ProtocolNameList，告诉服务端自己支持的应用协议；<br>服务器检查ProtocolNameList字段，如果支持：在ServerHello消息中以 ProtocolName字段返回选中的协议；如果不支持：断开连接<br>【Upgrade机制会增加一次往返的延迟：会在HTTP部分进行讲解】</p>
+<h4 id="服务器名称指示（SNI）"><a href="#服务器名称指示（SNI）" class="headerlink" title="服务器名称指示（SNI）"></a>服务器名称指示（SNI）</h4><p>网络上可以建立TCP连接的任意两端都可以建立加密TLS信道，客户端只需知道 另一端的IP地址即可建立连接并进行TLS握手。然而，如果服务器想在一个IP地址为多个站点提供服务，而每个站点都拥有自己的TLS证书，那怎么办？就要用到SNI：<br><strong>SNI</strong>：该扩展被引入TLS协议，该扩展允许客户端在握手之初就指明要连接的主机名。Web服务器可以检查SNI主机名，选择适当的证书，继续完成握手</p>
+<h3 id="TLS会话恢复"><a href="#TLS会话恢复" class="headerlink" title="TLS会话恢复"></a>TLS会话恢复</h3><p>TLS握手会带来额外的延迟和计算量，造成一定的性能损失。为了挽回某些损失，TLS提供了恢复功能，即在多个连接间共享协商后的安全密钥。</p>
+<h4 id="会话标识符（Session-Identifier）"><a href="#会话标识符（Session-Identifier）" class="headerlink" title="会话标识符（Session Identifier）"></a>会话标识符（Session Identifier）</h4><p><strong>会话标识符</strong>（RFC 5246，在SSL 2.0引入）：服务器支持创建32字节的会话标识符，用于保存一个会话ID和协商后的会话参数。<br>第一次握手时：服务器把ID信息作为“ServerHello”消息的一部分发送出去，自己把其他会话信息存储起来，客户端收到后保存会话ID信息<br>需要恢复时：将该ID包含在会话的“ClientHello”消息中， 告诉服务器自己还记着上次握手协商后的加密套件和密钥呢，从而实现重用。<br>问题：对于每天几百万连接的服务器来说，TLS连接会占用不必要的内存，于是引入会话记录单（Session Ticket）</p>
+<h4 id="会话记录单（Session-Ticket）"><a href="#会话记录单（Session-Ticket）" class="headerlink" title="会话记录单（Session Ticket）"></a>会话记录单（Session Ticket）</h4><p><strong>会话记录单</strong>（RFC 5077）：该机制不用服务器保存每个客户端的会话状态，而是将只有服务器知道的安全密钥加密过的所有会话数据交由客户端保存。<br>第一次握手时：客户端表明其支持会话记录单，则服务器可以在完整TLS握手的最后一次交换中添加一条“新会话记录单”(New Session Ticket)记录，保存对应的会话数据交给客户端，客户端将这个会话记录单保存起来<br>需要恢复时：在 ClientHello 消息中将加密过的会话记录单放在SessionTicket扩展中，服务器拿到之后拿自己的秘钥解密实现重用（这种回复称之为无状态恢复）</p>
+<p><strong>会话记录单 和 会话标识符 的区别在于是服务器还是客户端存这个会话记录</strong></p>
+<h3 id="TLS记录协议"><a href="#TLS记录协议" class="headerlink" title="TLS记录协议"></a>TLS记录协议</h3><p>所有经过采用TLS的协议的请求都必须经过记录协议，添加相应的字段，进行一定的数据处理之后才交由TCP发送出去<br>发送端步骤如下：</p>
+<ol>
+<li>记录协议接收上层应用数据</li>
+<li>接收到的应用数据被切分为块:最大为每条记录214字节，即16KB。</li>
+<li>压缩应用数据(可选)。</li>
+<li>添加 MAC(Message Authentication Code)或 HMAC。</li>
+<li>用商定的加密套件加密数据</li>
+<li>交由TCP层传输<br>接收端顺序相反：6 —&gt; 1<br>注意：<br>TLS记录协议最大为16KB。事实上可以自主选择记录大小，小记录会因为分帧而招致较大开销<br>每条记录包含5字节的首部、MAC(在 SSL 3.0、TLS 1.0、TLS 1.1 中最多 20 字节，在 TLS 1.2 中最多 32 字节)，如果使用块加密则还有填充<br>必须接收到整条记录（不是帧）才开始解密和验证。</li>
+</ol>
+<h3 id="优化建议"><a href="#优化建议" class="headerlink" title="优化建议"></a>优化建议</h3><ul>
+<li>最大限制提升TCP性能</li>
+<li>开启会话缓存：在支持的客户端中使用会话记录单，而在不支持的客户端中使用会话标识符</li>
+<li>调整TLS记录大小：记录过小会造成分帧浪费，大记录会导致延迟。最好的做法：每个TCP分组恰好封装一个TLS记录，而TLS记录大小恰好占满TCP分配的MSS(Maximum Segment Size，最大段大小)<br>（一方面不要让TLS记录分成多个TCP分组，另一方面又要尽量在一条记录中多发送数据，参考数据如下：<ul>
+<li>IPv4 帧需要 20 字节，IPv6 需要 40 字节;</li>
+<li>TCP 帧需要 20 字节;</li>
+<li>TCP 选项需要 40 字节(时间戳、SACK 等)。<br>假设常见的MTU为1500字节，则TLS记录大小在IPv4下是1420字节，在IPv6下是1400字节。为确保向前兼容，建议使用IPv6下的大小:1400字节。当然，如果MTU更小，这个值也要相应调小）<br>【但应用层无法控制TLS记录大小，一般是服务器编译时的常量或标志，可以通过服务器文档来查看这个值】</li>
+</ul>
+</li>
+<li>禁用服务器的TLS压缩功能<ul>
+<li>传输级的 TLS 压缩不关心内容，可能会再次压缩已经压缩过的数据(图像、视频， 等等)。双重压缩会浪费服务器和客户端的CPU时间，而且暴露的安全漏洞也很严重，因此 请禁用TLS压缩</li>
+</ul>
+</li>
+<li>确保证书链不会超过拥塞窗口的大小，从信任链中去掉不必要的证书，减少链条层次，或者直接减小证书大小<ul>
+<li>如果证书链长度超过了 TCP 的初始拥塞窗口(图 4-11)，那我们无意 间就会让握手多了一次往返:证书长度超过拥塞窗口，从而导致服务器停下来等待 客户端的 ACK 消息</li>
+</ul>
+</li>
+<li>启用服务器的OCSP封套功能（证书方面的优化）</li>
+<li>启用服务器对SNI的支持</li>
+<li>追加HTTP严格传输安全首部（不太理解）</li>
+</ul>
+<p>（后面这两个，要想进一步了解看书吧，感觉书也没讲特别细，个人也没特别深的理解，就略过了）</p>
+
+        
+        </div>
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="http://alfredzhenyu.github.io/2016/12/26/《Web性能权威指南》读书笔记（三）/" data-id="ciyqla35e000lhf7dn7lylt20" class="article-share-link"><i class="fa fa-share"></i>Compartir</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+        <a href="http://alfredzhenyu.github.io/2016/12/26/《Web性能权威指南》读书笔记（三）/#comments" class="article-comment-link disqus-comment-count" data-disqus-url="http://alfredzhenyu.github.io/2016/12/26/《Web性能权威指南》读书笔记（三）/">Comentarios</a>
+    
+
+        </footer>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2016/12/26/《Web性能权威指南》读书笔记（四）/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Más nuevo</strong>
+            <div class="article-nav-title">
+                
+                    《Web性能权威指南》读书笔记（四）
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2016/12/23/《Web性能权威指南》读书笔记（二）/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Más viejo</strong>
+            <div class="article-nav-title">《Web性能权威指南》读书笔记（二）</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+</section>
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Recientes</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/13/iOS开发黑科技之Xcode多Target开发/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/13/iOS开发黑科技之Xcode多Target开发/" class="title">iOS开发黑科技之Xcode多Target开发</a></p>
+                            <p class="item-date"><time datetime="2017-01-13T02:39:45.000Z" itemprop="datePublished">2017-01-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/" class="title">Objc的Runtime源码解读（三）之消息（Messaging）机制</a></p>
+                            <p class="item-date"><time datetime="2017-01-11T08:54:46.000Z" itemprop="datePublished">2017-01-11</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/" class="title">Objc的Runtime源码解读（二）之方法的存储</a></p>
+                            <p class="item-date"><time datetime="2017-01-09T08:50:25.000Z" itemprop="datePublished">2017-01-09</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/09/Objc的Runtime源码解读（一）之isa指针/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/09/Objc的Runtime源码解读（一）之isa指针/" class="title">Objc的Runtime源码解读（一）之isa指针</a></p>
+                            <p class="item-date"><time datetime="2017-01-09T02:22:43.000Z" itemprop="datePublished">2017-01-09</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/06/CoreFoundation源码解读之CFArray/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/06/CoreFoundation源码解读之CFArray/" class="title">CoreFoundation源码解读之CFArray</a></p>
+                            <p class="item-date"><time datetime="2017-01-06T08:10:17.000Z" itemprop="datePublished">2017-01-06</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Categorias</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/iOS/">iOS</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/总结/">总结</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/生活/">生活</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/网络/">网络</a><span class="category-list-count">5</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Archivos</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">December 2016</a><span class="archive-list-count">6</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Etiquetas</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/">HTTP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTPS/">HTTPS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Objc/">Objc</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSL-TLS/">SSL/TLS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/">TCP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Xcode/">Xcode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iOS/">iOS</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/总结/">总结</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/源码解析/">源码解析</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">5</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Nube de etiquetas</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/HTTP/" style="font-size: 13.33px;">HTTP</a> <a href="/tags/HTTPS/" style="font-size: 10px;">HTTPS</a> <a href="/tags/Objc/" style="font-size: 16.67px;">Objc</a> <a href="/tags/SSL-TLS/" style="font-size: 10px;">SSL/TLS</a> <a href="/tags/TCP/" style="font-size: 13.33px;">TCP</a> <a href="/tags/Xcode/" style="font-size: 10px;">Xcode</a> <a href="/tags/iOS/" style="font-size: 20px;">iOS</a> <a href="/tags/总结/" style="font-size: 10px;">总结</a> <a href="/tags/源码解析/" style="font-size: 16.67px;">源码解析</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a> <a href="/tags/网络/" style="font-size: 20px;">网络</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">Links</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2017 Alfred<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_config = function () {
+        
+            this.page.url = 'http://alfredzhenyu.github.io/2016/12/26/《Web性能权威指南》读书笔记（三）/';
+        
+        this.page.identifier = '《Web性能权威指南》读书笔记（三）';
+    };
+    (function() { 
+        var d = document, s = d.createElement('script');  
+        s.src = '//' + 'hexo-theme-icarus' + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

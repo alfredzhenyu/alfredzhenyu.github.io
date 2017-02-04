@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+    <meta charset="utf-8">
+    
+    <title>iOS开发黑科技之Xcode多Target开发 | Alfredzhenyu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="前言很多时候会出现一种情况：同一个工程文件需要生成多个相似的app
+比如：
+同一个app的Pro、Lite、Free版
+同一个模板工程应用于不同app
+同一个app的iPad、iPhone版
+在这种情况下，就需要在一个Xcode工程下添加多个Target来实现，这里我们就来看下，如何在一个工程下进行多Target开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS开发黑科技之Xcode多Target开发">
+<meta property="og:url" content="http://alfredzhenyu.github.io/2017/01/13/iOS开发黑科技之Xcode多Target开发/index.html">
+<meta property="og:site_name" content="Alfredzhenyu">
+<meta property="og:description" content="前言很多时候会出现一种情况：同一个工程文件需要生成多个相似的app
+比如：
+同一个app的Pro、Lite、Free版
+同一个模板工程应用于不同app
+同一个app的iPad、iPhone版
+在这种情况下，就需要在一个Xcode工程下添加多个Target来实现，这里我们就来看下，如何在一个工程下进行多Target开发">
+<meta property="og:image" content="http://alfredzhenyu.github.io/DuplicateTarget.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/TargetCopy.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/TargetModifyName1.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/SchemeModifyName1.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/SchemeModifyName2.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/PlistModifyName.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/InfoPlistPath.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/TargetResources.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/Prepoccesing.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/TargetDiffCode.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/AddUserDefined.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/GloabalFlag.png">
+<meta property="og:image" content="http://alfredzhenyu.github.io/FlagCode.png">
+<meta property="og:updated_time" content="2017-01-17T07:10:59.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS开发黑科技之Xcode多Target开发">
+<meta name="twitter:description" content="前言很多时候会出现一种情况：同一个工程文件需要生成多个相似的app
+比如：
+同一个app的Pro、Lite、Free版
+同一个模板工程应用于不同app
+同一个app的iPad、iPhone版
+在这种情况下，就需要在一个Xcode工程下添加多个Target来实现，这里我们就来看下，如何在一个工程下进行多Target开发">
+<meta name="twitter:image" content="http://alfredzhenyu.github.io/DuplicateTarget.png">
+    
+
+    
+        <link rel="alternate" href="/" title="Alfredzhenyu" type="application/atom+xml" />
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                <i class="logo"></i>
+                <span class="site-title">Alfredzhenyu</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/.">Home</a>
+                
+                    <a class="main-nav-link" href="/archives">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories">Categories</a>
+                
+                    <a class="main-nav-link" href="/tags">Tags</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="/css/images/avatar.png" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Buscar" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Entradas',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categorias',
+            TAGS: 'Etiquetas',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/.">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/tags">Tags</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Buscar" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="/css/images/avatar.png" />
+            <h2 id="name">PPOffice</h2>
+            <h3 id="title">Web Developer &amp; Designer</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>Harbin, China</span>
+            <a id="follow" target="_blank" href="https://github.com/ppoffice/">SEGUIR</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                12
+                <span>Entradas</span>
+            </div>
+            <div class="article-info-block">
+                11
+                <span>Etiquetas</span>
+            </div>
+        </div>
+        
+        <div class="profile-block social-links">
+            <table>
+                <tr>
+                    
+                    
+                    <td>
+                        <a href="http://github.com/ppoffice/hexo-theme-icarus" target="_blank" title="github" class=tooltip>
+                            <i class="fa fa-github"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="twitter" class=tooltip>
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="facebook" class=tooltip>
+                            <i class="fa fa-facebook"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="dribbble" class=tooltip>
+                            <i class="fa fa-dribbble"></i>
+                        </a>
+                    </td>
+                    
+                    <td>
+                        <a href="/" target="_blank" title="rss" class=tooltip>
+                            <i class="fa fa-rss"></i>
+                        </a>
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-iOS开发黑科技之Xcode多Target开发" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            iOS开发黑科技之Xcode多Target开发
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2017/01/13/iOS开发黑科技之Xcode多Target开发/">
+            <time datetime="2017-01-13T02:39:45.000Z" itemprop="datePublished">2017-01-13</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/iOS/">iOS</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Xcode/">Xcode</a>, <a class="tag-link" href="/tags/iOS/">iOS</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>很多时候会出现一种情况：同一个工程文件需要生成多个相似的app</p>
+<p>比如：</p>
+<p>同一个app的Pro、Lite、Free版</p>
+<p>同一个模板工程应用于不同app</p>
+<p>同一个app的iPad、iPhone版</p>
+<p>在这种情况下，就需要在一个Xcode工程下添加多个Target来实现，这里我们就来看下，如何在一个工程下进行多Target开发</p>
+<hr>
+<a id="more"></a>
+<h2 id="Target的创建"><a href="#Target的创建" class="headerlink" title="Target的创建"></a>Target的创建</h2><h3 id="复制一个新Target"><a href="#复制一个新Target" class="headerlink" title="复制一个新Target"></a>复制一个新Target</h3><p><img src="DuplicateTarget.png" alt=""></p>
+<p>点击工程-找到控制窗口的侧边栏里找到<code>TARGETS</code>-右键呼出菜单点击<code>Duplicate</code></p>
+<p>可以看到</p>
+<p><img src="TargetCopy.png" alt=""></p>
+<p>我们发现图片箭头地方多了新的Copy Target，但通常这个名字显得有点不太专业，并不满足我们的要求，我们需要对其进行改名</p>
+<h3 id="更改Target名字"><a href="#更改Target名字" class="headerlink" title="更改Target名字"></a>更改Target名字</h3><p>直接双击控制栏里的侧边栏的<code>Target</code>，更改名字如图：</p>
+<p><img src="TargetModifyName1.png" alt="更改Target名字"></p>
+<h3 id="更改Scheme名字"><a href="#更改Scheme名字" class="headerlink" title="更改Scheme名字"></a>更改Scheme名字</h3><p>点击最上方在更改当前编译的<code>Target</code>位置里点击<code>edit scheme</code>选项，出现如图控制窗 </p>
+<p><img src="SchemeModifyName1.png" alt=""></p>
+<p>点击<code>Manage Scemes</code>找到需要更改名字的<code>Sceme</code>,双击重命名</p>
+<p><img src="SchemeModifyName2.png" alt="更改Scheme名字"></p>
+<h3 id="更改-plist文件名"><a href="#更改-plist文件名" class="headerlink" title="更改.plist文件名"></a>更改.plist文件名</h3><p>双击需要更改的plist文件名，输入文件名即可，如图</p>
+<p><img src="PlistModifyName.png" alt=""></p>
+<p>但发现更改名字后工程无法识别，可以找到对应<code>Target</code>的<code>Build Setting</code>找到一个选项<code>Info.plist File</code>，更改成对应路径即可</p>
+<p><img src="InfoPlistPath.png" alt=""></p>
+<h2 id="多Target开发"><a href="#多Target开发" class="headerlink" title="多Target开发"></a>多Target开发</h2><p>实际项目中通常会出现不同的Target使用不同的资源、代码</p>
+<p>这里，我来讲讲我在这块的一些经验：</p>
+<h3 id="不同Target不同资源的处理"><a href="#不同Target不同资源的处理" class="headerlink" title="不同Target不同资源的处理"></a>不同Target不同资源的处理</h3><p>在资源文件夹中新建一个文件夹<code>TargetDiff</code>用于装不同Target不一样的资源，这里有个小技巧，就是在<code>TargetDiff</code>文件夹下建多个文件夹以对应不同的Target，然后再每个Target文件夹下对于同一种资源取相同的名字，如图：</p>
+<p><img src="TargetResources.png" alt=""></p>
+<p>可以看到不同的Target：<code>Bemewings</code>和<code>Bemetoy</code>下都有<code>Logo.bundle</code>然后下面有<code>login_logo.png</code>等等的同名资源</p>
+<p>这时候我们只要在右侧更改其对应的<code>Target Membership</code>，选择不同的Target，这时候不同Target编译的时候，只有在membership之内的资源才会打包进app内，那么就可以实现只写一套加载资源的代码，就可以索引到对应Target的资源，从而应用在不同的Target上</p>
+<h3 id="不同Target不同代码的处理"><a href="#不同Target不同代码的处理" class="headerlink" title="不同Target不同代码的处理"></a>不同Target不同代码的处理</h3><h4 id="Target标识符"><a href="#Target标识符" class="headerlink" title="Target标识符"></a>Target标识符</h4><p>打开不同Target下的<code>Build Setting</code>，找到下面这一类：</p>
+<p><img src="Prepoccesing.png" alt=""></p>
+<ul>
+<li>把<code>Enable Foundation Assertions</code>设置为YES</li>
+<li>在<code>Preprocessor Macros</code>下的每一个选项都添加一个宏用于标识对应的Target</li>
+</ul>
+<p>在这里我添加了一个<code>BEMEWINGS</code>以对应我的<code>Bemewings</code>的Target</p>
+<p>这时候可以在AppDelegate里就可以加入以下代码来实现不同Target不同处理：</p>
+<p><img src="TargetDiffCode.png" alt=""></p>
+<h4 id="User-Defined标识"><a href="#User-Defined标识" class="headerlink" title="User-Defined标识"></a>User-Defined标识</h4><p>上面的那种方法只是简单的识别是否是某个Target，但是实际开发中会出现这样的需求：</p>
+<p>假设有三四个相似的app（Target）可能其中有一两个使用到这个功能模块，运行了这段代码，而其他则没有，那么就需要用到User-Defined来将代码模块功能化，通过Xcode的选项来控制不同Target、甚至不同编译版本是否开启关闭这个功能:</p>
+<p>先上图：</p>
+<p><img src="AddUserDefined.png" alt=""></p>
+<p>以字段<code>_BM_SHELLSCORE_ENABLE</code>为例</p>
+<p>注：</p>
+<p>前面加下划线是因为这是个私有变量，其实外界是访问不到这个的</p>
+<p>另外这里的值写YES、NO或者任意字符串都是可以的，这只是一个宏，真正值是啥取决于后面的操作：</p>
+<ul>
+<li><strong>设置全局宏：</strong></li>
+</ul>
+<p>如图：</p>
+<p><img src="GloabalFlag.png" alt=""></p>
+<p>在对应的添加宏定义</p>
+<p>把<code>_BM_SHELLSCORE_ENABLE</code>当值时，可以这样定义</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-D&apos;BM_SHELLSCORE_ENABLE=$(_BM_SHELLSCORE_ENABLE)&apos;</div></pre></td></tr></table></figure>
+<p>把<code>_BM_SHELLSCORE_ENABLE</code>当字符串时，可以这样定义</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-D&apos;BM_SHELLSCORE_OPEN_INFO=@&quot;$(_BM_SHELLSCORE_ENABLE)&quot;&apos;</div></pre></td></tr></table></figure>
+<p>注：</p>
+<p><code>BM_SHELLSCORE_ENABLE</code>是真真正正能代码中使用的宏</p>
+<p><code>$(_BM_SHELLSCORE_ENABLE)</code>表示取<code>_BM_SHELLSCORE_ENABLE</code>的值</p>
+<ul>
+<li><p><strong>设置局部宏：</strong></p>
+<p>点击<code>Target</code>-<code>Build Phases</code>-点击需要宏的文件-添加<code>Compiler Flags</code>，输入上面一样的的宏定义即可</p>
+<p>注意：</p>
+<p>定义多个宏时，一定要换行，换行的方式是<code>Option+enter</code>键，不能直接<code>enter</code></p>
+</li>
+</ul>
+<p>功能模块控制：</p>
+<p>对于功能模块的代码统一加入宏:</p>
+<p><img src="FlagCode.png" alt=""></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">if</span> BM_SHELLSCORE_ENABLE</span></div><div class="line"><span class="comment">//code here</span></div><div class="line"><span class="meta">#<span class="meta-keyword">else</span></span></div><div class="line"><span class="comment">//code here</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div></pre></td></tr></table></figure>
+<p>这时候，你就可以通过更改工程文件-Target里Build Setting里的User-Deifined值来控制是否开启这项功能</p>
+<h4 id="User-Defined扩展"><a href="#User-Defined扩展" class="headerlink" title="User-Defined扩展"></a>User-Defined扩展</h4><p>而对于String类型的宏更多用于在不同编译版本下设置不同的URL，因为一般来说测试环境与正式环境访问的地址，域名都不一样，那么就可以通过User-Defined里一个字段下面的Debug、Release设置不同的URL，就可以实现同一段代码访问同一个宏，实际使用的是不同值的情况</p>
+
+        
+        </div>
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="http://alfredzhenyu.github.io/2017/01/13/iOS开发黑科技之Xcode多Target开发/" data-id="ciyqla34p000ahf7dbzfvepgd" class="article-share-link"><i class="fa fa-share"></i>Compartir</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+        <a href="http://alfredzhenyu.github.io/2017/01/13/iOS开发黑科技之Xcode多Target开发/#comments" class="article-comment-link disqus-comment-count" data-disqus-url="http://alfredzhenyu.github.io/2017/01/13/iOS开发黑科技之Xcode多Target开发/">Comentarios</a>
+    
+
+        </footer>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Más viejo</strong>
+            <div class="article-nav-title">Objc的Runtime源码解读（三）之消息（Messaging）机制</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    <section id="comments">
+    
+        
+    <div id="disqus_thread">
+        <noscript>Please enable JavaScript to view the <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    </div>
+
+    
+    </section>
+
+</section>
+            
+                <aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Recientes</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/13/iOS开发黑科技之Xcode多Target开发/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/13/iOS开发黑科技之Xcode多Target开发/" class="title">iOS开发黑科技之Xcode多Target开发</a></p>
+                            <p class="item-date"><time datetime="2017-01-13T02:39:45.000Z" itemprop="datePublished">2017-01-13</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/" class="title">Objc的Runtime源码解读（三）之消息（Messaging）机制</a></p>
+                            <p class="item-date"><time datetime="2017-01-11T08:54:46.000Z" itemprop="datePublished">2017-01-11</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/" class="title">Objc的Runtime源码解读（二）之方法的存储</a></p>
+                            <p class="item-date"><time datetime="2017-01-09T08:50:25.000Z" itemprop="datePublished">2017-01-09</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/09/Objc的Runtime源码解读（一）之isa指针/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/09/Objc的Runtime源码解读（一）之isa指针/" class="title">Objc的Runtime源码解读（一）之isa指针</a></p>
+                            <p class="item-date"><time datetime="2017-01-09T02:22:43.000Z" itemprop="datePublished">2017-01-09</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/01/06/CoreFoundation源码解读之CFArray/" class="thumbnail">
+    
+    
+        <span class="thumbnail-image thumbnail-none"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/iOS/">iOS</a></p>
+                            <p class="item-title"><a href="/2017/01/06/CoreFoundation源码解读之CFArray/" class="title">CoreFoundation源码解读之CFArray</a></p>
+                            <p class="item-date"><time datetime="2017-01-06T08:10:17.000Z" itemprop="datePublished">2017-01-06</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Categorias</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/iOS/">iOS</a><span class="category-list-count">5</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/总结/">总结</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/生活/">生活</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/网络/">网络</a><span class="category-list-count">5</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Archivos</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">January 2017</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">December 2016</a><span class="archive-list-count">6</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Etiquetas</h3>
+        <div class="widget">
+            <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTP/">HTTP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/HTTPS/">HTTPS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Objc/">Objc</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/SSL-TLS/">SSL/TLS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TCP/">TCP</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Xcode/">Xcode</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iOS/">iOS</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/总结/">总结</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/源码解析/">源码解析</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/生活/">生活</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络/">网络</a><span class="tag-list-count">5</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">Nube de etiquetas</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/HTTP/" style="font-size: 13.33px;">HTTP</a> <a href="/tags/HTTPS/" style="font-size: 10px;">HTTPS</a> <a href="/tags/Objc/" style="font-size: 16.67px;">Objc</a> <a href="/tags/SSL-TLS/" style="font-size: 10px;">SSL/TLS</a> <a href="/tags/TCP/" style="font-size: 13.33px;">TCP</a> <a href="/tags/Xcode/" style="font-size: 10px;">Xcode</a> <a href="/tags/iOS/" style="font-size: 20px;">iOS</a> <a href="/tags/总结/" style="font-size: 10px;">总结</a> <a href="/tags/源码解析/" style="font-size: 16.67px;">源码解析</a> <a href="/tags/生活/" style="font-size: 10px;">生活</a> <a href="/tags/网络/" style="font-size: 20px;">网络</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">Links</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2017 Alfred<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+        </div>
+    </div>
+</footer>
+        
+    
+    <script>
+    var disqus_config = function () {
+        
+            this.page.url = 'http://alfredzhenyu.github.io/2017/01/13/iOS开发黑科技之Xcode多Target开发/';
+        
+        this.page.identifier = 'iOS开发黑科技之Xcode多Target开发';
+    };
+    (function() { 
+        var d = document, s = d.createElement('script');  
+        s.src = '//' + 'hexo-theme-icarus' + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
