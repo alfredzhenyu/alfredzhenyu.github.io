@@ -23,7 +23,7 @@
 第一章 延迟与带宽
 第二章 TCP的构成">
 <meta property="og:image" content="http://alfredzhenyu.github.io/延时与用户体验.png">
-<meta property="og:updated_time" content="2017-01-04T08:49:03.000Z">
+<meta property="og:updated_time" content="2017-02-05T03:17:31.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="《Web性能权威指南》读书笔记(一)">
 <meta name="twitter:description" content="目录：
@@ -40,7 +40,7 @@
   <style type="text/css">
   
     #container.show {
-      background: linear-gradient(200deg,#a0cfe4,#e8c37e);
+      background: linear-gradient(200deg,#eaeaea,#4d4d4d);
     }
   </style>
   
@@ -72,7 +72,7 @@
 			
 				<li><a href="/">主页</a></li>
 	        
-				<li><a href="/tags/随笔/">随笔</a></li>
+				<li><a href="/categories/">分类</a></li>
 	        
 			</ul>
 		</nav>
@@ -140,7 +140,7 @@
 				
 					<li style="width: 50%"><a href="/">主页</a></li>
 		        
-					<li style="width: 50%"><a href="/tags/随笔/">随笔</a></li>
+					<li style="width: 50%"><a href="/categories/">分类</a></li>
 		        
 				</ul>
 			</nav>
@@ -183,7 +183,6 @@
 </ul>
 </li>
 </ul>
-<hr>
 <a id="more"></a>
 <h1 id="第一部分-网络技术概览"><a href="#第一部分-网络技术概览" class="headerlink" title="第一部分 网络技术概览"></a>第一部分 网络技术概览</h1><h2 id="第一章-延迟与带宽"><a href="#第一章-延迟与带宽" class="headerlink" title="第一章 延迟与带宽"></a>第一章 延迟与带宽</h2><ol>
 <li>对网络通信通信部分起决定性因素的有两方面：<ul>
@@ -246,7 +245,7 @@
 <h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><ul>
 <li><strong>带宽延迟积（Bandwidth-delay product，BDP）</strong>：任意时刻处于在发送途中还未收到ACK状态的最大数据量 = 数据链路的容量（带宽） *  端到端的延迟</li>
 <li><strong>队首(HOL，Head of Line)阻塞</strong>：每个TCP分组都会带着一个唯一的序列号被发，而再对于应用层而言，所有分组必须是按顺序传送到接收端。如果TCP在接收中中途有一个分组没能到达接收端的传输层，那么后续分组必须保存在接收端的 TCP 缓冲区，等待丢失的分组重发并到达接收端，之后再一起提交到应用层，而应用层在接收端只能感受到这种整体的延迟。这种效应称为 TCP 的队首阻塞</li>
-<li><strong>抖动</strong>：由于队首阻塞造成的延迟分组造成相应的重排和重组，造成分组到达延迟无法预知。这个延迟时间的变化通常被称为抖动，也是影响应用程序性能的一个主要因素<br>【无需按序交付数据或能够处理分组丢失的应用程序，以及对延迟或抖动要求很高的应用程序，最好选择 UDP 等协议。比如语音和游戏状态通信：<br>&emsp; 音频编解码器：就算有个包丢了，只要在音频中插入一个小小的间歇，就可以继续 处理后来的包。只要间歇够小，用户就注意不到，而等待丢失的包则可能导致音 频输出产生无法预料的暂停。相对来说，后者的用户体验更糟糕。<br>&emsp; 3D 游戏中角色更新状态也一样:收到 T 时刻的包而等待 T-1 时刻的 包通常毫无必要。理想情况下，应该可以接收所有状态更新，但为避免游戏延迟， 间歇性的丢包也是可以接受的。】</li>
+<li><strong>抖动</strong>：由于队首阻塞造成的延迟分组造成相应的重排和重组，造成分组到达延迟无法预知。这个延迟时间的变化通常被称为抖动，也是影响应用程序性能的一个主要因素<br>【无需按序交付数据或能够处理分组丢失的应用程序，以及对延迟或抖动要求很高的应用程序，最好选择 UDP 等协议。比如语音和游戏状态通信：<br>&emsp; 音频编解码器：就算有个包丢了，只要在音频中插入一个小小的间歇，就可以继续 处理后来的包。只要间歇够小，用户就注意不到，而等待丢失的包则可能导致音 频输出产生无法预料的暂停。相对来说，后者的用户体验更糟糕。&emsp; 3D 游戏中角色更新状态也一样:收到 T 时刻的包而等待 T-1 时刻的 包通常毫无必要。理想情况下，应该可以接收所有状态更新，但为避免游戏延迟， 间歇性的丢包也是可以接受的。】</li>
 </ul>
 <h3 id="TCP优化建议："><a href="#TCP优化建议：" class="headerlink" title="TCP优化建议："></a>TCP优化建议：</h3><ol>
 <li>服务器优化：<ul>

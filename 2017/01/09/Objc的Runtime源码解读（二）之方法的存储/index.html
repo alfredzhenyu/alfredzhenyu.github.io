@@ -29,7 +29,7 @@ class_rw_t和class_ro_t结构体
 <meta property="og:image" content="http://alfredzhenyu.github.io/objc-method-class_data_bits_t.png">
 <meta property="og:image" content="http://alfredzhenyu.github.io/objc-method-before-realize-class.png">
 <meta property="og:image" content="http://alfredzhenyu.github.io/objc-method-after-realize-class.png">
-<meta property="og:updated_time" content="2017-01-17T07:10:58.000Z">
+<meta property="og:updated_time" content="2017-02-05T03:17:10.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Objc的Runtime源码解读（二）之方法的存储">
 <meta name="twitter:description" content="目录：
@@ -48,7 +48,7 @@ class_rw_t和class_ro_t结构体
   <style type="text/css">
   
     #container.show {
-      background: linear-gradient(200deg,#a0cfe4,#e8c37e);
+      background: linear-gradient(200deg,#eaeaea,#4d4d4d);
     }
   </style>
   
@@ -80,7 +80,7 @@ class_rw_t和class_ro_t结构体
 			
 				<li><a href="/">主页</a></li>
 	        
-				<li><a href="/tags/随笔/">随笔</a></li>
+				<li><a href="/categories/">分类</a></li>
 	        
 			</ul>
 		</nav>
@@ -148,7 +148,7 @@ class_rw_t和class_ro_t结构体
 				
 					<li style="width: 50%"><a href="/">主页</a></li>
 		        
-					<li style="width: 50%"><a href="/tags/随笔/">随笔</a></li>
+					<li style="width: 50%"><a href="/categories/">分类</a></li>
 		        
 				</ul>
 			</nav>
@@ -193,7 +193,6 @@ class_rw_t和class_ro_t结构体
 </ul>
 </li>
 </ul>
-<hr>
 <a id="more"></a>
 <h2 id="class-data-bits-结构体"><a href="#class-data-bits-结构体" class="headerlink" title="class_data_bits 结构体"></a><code>class_data_bits</code> 结构体</h2><p>正如上篇文章提到的一样，方法储存在<code>obj_class</code>的<code>class_data_bits</code>类型的结构体里</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_class : objc_object &#123;</div><div class="line">    <span class="keyword">isa_t</span> isa;</div><div class="line">    Class superclass;</div><div class="line">    <span class="keyword">cache_t</span> cache;             <span class="comment">// formerly cache pointer and vtable</span></div><div class="line">    <span class="keyword">class_data_bits_t</span> bits;    <span class="comment">// class_rw_t * plus custom rr/alloc flags</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
