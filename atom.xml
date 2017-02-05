@@ -1,0 +1,1029 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Alfredzhenyu</title>
+  <subtitle>Life &amp; Tech</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://alfredzhenyu.github.io/"/>
+  <updated>2017-02-05T03:39:36.000Z</updated>
+  <id>http://alfredzhenyu.github.io/</id>
+  
+  <author>
+    <name>Alfred</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>iOS开发黑科技之Xcode多Target开发</title>
+    <link href="http://alfredzhenyu.github.io/2017/01/13/iOS%E5%BC%80%E5%8F%91%E9%BB%91%E7%A7%91%E6%8A%80%E4%B9%8BXcode%E5%A4%9ATarget%E5%BC%80%E5%8F%91/"/>
+    <id>http://alfredzhenyu.github.io/2017/01/13/iOS开发黑科技之Xcode多Target开发/</id>
+    <published>2017-01-13T02:39:45.000Z</published>
+    <updated>2017-02-05T03:39:36.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>很多时候会出现一种情况：同一个工程文件需要生成多个相似的app</p>
+<p>比如：</p>
+<p>同一个app的Pro、Lite、Free版</p>
+<p>同一个模板工程应用于不同app</p>
+<p>同一个app的iPad、iPhone版</p>
+<p>在这种情况下，就需要在一个Xcode工程下添加多个Target来实现，这里我们就来看下，如何在一个工程下进行多Target开发</p>
+<a id="more"></a>
+<h2 id="Target的创建"><a href="#Target的创建" class="headerlink" title="Target的创建"></a>Target的创建</h2><h3 id="复制一个新Target"><a href="#复制一个新Target" class="headerlink" title="复制一个新Target"></a>复制一个新Target</h3><p><img src="DuplicateTarget.png" alt=""></p>
+<p>点击工程-找到控制窗口的侧边栏里找到<code>TARGETS</code>-右键呼出菜单点击<code>Duplicate</code></p>
+<p>可以看到</p>
+<p><img src="TargetCopy.png" alt=""></p>
+<p>我们发现图片箭头地方多了新的Copy Target，但通常这个名字显得有点不太专业，并不满足我们的要求，我们需要对其进行改名</p>
+<h3 id="更改Target名字"><a href="#更改Target名字" class="headerlink" title="更改Target名字"></a>更改Target名字</h3><p>直接双击控制栏里的侧边栏的<code>Target</code>，更改名字如图：</p>
+<p><img src="TargetModifyName1.png" alt="更改Target名字"></p>
+<h3 id="更改Scheme名字"><a href="#更改Scheme名字" class="headerlink" title="更改Scheme名字"></a>更改Scheme名字</h3><p>点击最上方在更改当前编译的<code>Target</code>位置里点击<code>edit scheme</code>选项，出现如图控制窗 </p>
+<p><img src="SchemeModifyName1.png" alt=""></p>
+<p>点击<code>Manage Scemes</code>找到需要更改名字的<code>Sceme</code>,双击重命名</p>
+<p><img src="SchemeModifyName2.png" alt="更改Scheme名字"></p>
+<h3 id="更改-plist文件名"><a href="#更改-plist文件名" class="headerlink" title="更改.plist文件名"></a>更改.plist文件名</h3><p>双击需要更改的plist文件名，输入文件名即可，如图</p>
+<p><img src="PlistModifyName.png" alt=""></p>
+<p>但发现更改名字后工程无法识别，可以找到对应<code>Target</code>的<code>Build Setting</code>找到一个选项<code>Info.plist File</code>，更改成对应路径即可</p>
+<p><img src="InfoPlistPath.png" alt=""></p>
+<h2 id="多Target开发"><a href="#多Target开发" class="headerlink" title="多Target开发"></a>多Target开发</h2><p>实际项目中通常会出现不同的Target使用不同的资源、代码</p>
+<p>这里，我来讲讲我在这块的一些经验：</p>
+<h3 id="不同Target不同资源的处理"><a href="#不同Target不同资源的处理" class="headerlink" title="不同Target不同资源的处理"></a>不同Target不同资源的处理</h3><p>在资源文件夹中新建一个文件夹<code>TargetDiff</code>用于装不同Target不一样的资源，这里有个小技巧，就是在<code>TargetDiff</code>文件夹下建多个文件夹以对应不同的Target，然后再每个Target文件夹下对于同一种资源取相同的名字，如图：</p>
+<p><img src="TargetResources.png" alt=""></p>
+<p>可以看到不同的Target：<code>Bemewings</code>和<code>Bemetoy</code>下都有<code>Logo.bundle</code>然后下面有<code>login_logo.png</code>等等的同名资源</p>
+<p>这时候我们只要在右侧更改其对应的<code>Target Membership</code>，选择不同的Target，这时候不同Target编译的时候，只有在membership之内的资源才会打包进app内，那么就可以实现只写一套加载资源的代码，就可以索引到对应Target的资源，从而应用在不同的Target上</p>
+<h3 id="不同Target不同代码的处理"><a href="#不同Target不同代码的处理" class="headerlink" title="不同Target不同代码的处理"></a>不同Target不同代码的处理</h3><h4 id="Target标识符"><a href="#Target标识符" class="headerlink" title="Target标识符"></a>Target标识符</h4><p>打开不同Target下的<code>Build Setting</code>，找到下面这一类：</p>
+<p><img src="Prepoccesing.png" alt=""></p>
+<ul>
+<li>把<code>Enable Foundation Assertions</code>设置为YES</li>
+<li>在<code>Preprocessor Macros</code>下的每一个选项都添加一个宏用于标识对应的Target</li>
+</ul>
+<p>在这里我添加了一个<code>BEMEWINGS</code>以对应我的<code>Bemewings</code>的Target</p>
+<p>这时候可以在AppDelegate里就可以加入以下代码来实现不同Target不同处理：</p>
+<p><img src="TargetDiffCode.png" alt=""></p>
+<h4 id="User-Defined标识"><a href="#User-Defined标识" class="headerlink" title="User-Defined标识"></a>User-Defined标识</h4><p>上面的那种方法只是简单的识别是否是某个Target，但是实际开发中会出现这样的需求：</p>
+<p>假设有三四个相似的app（Target）可能其中有一两个使用到这个功能模块，运行了这段代码，而其他则没有，那么就需要用到User-Defined来将代码模块功能化，通过Xcode的选项来控制不同Target、甚至不同编译版本是否开启关闭这个功能:</p>
+<p>先上图：</p>
+<p><img src="AddUserDefined.png" alt=""></p>
+<p>以字段<code>_BM_SHELLSCORE_ENABLE</code>为例</p>
+<p>注：</p>
+<p>前面加下划线是因为这是个私有变量，其实外界是访问不到这个的</p>
+<p>另外这里的值写YES、NO或者任意字符串都是可以的，这只是一个宏，真正值是啥取决于后面的操作：</p>
+<ul>
+<li><strong>设置全局宏：</strong></li>
+</ul>
+<p>如图：</p>
+<p><img src="GloabalFlag.png" alt=""></p>
+<p>在对应的添加宏定义</p>
+<p>把<code>_BM_SHELLSCORE_ENABLE</code>当值时，可以这样定义</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-D&apos;BM_SHELLSCORE_ENABLE=$(_BM_SHELLSCORE_ENABLE)&apos;</div></pre></td></tr></table></figure>
+<p>把<code>_BM_SHELLSCORE_ENABLE</code>当字符串时，可以这样定义</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-D&apos;BM_SHELLSCORE_OPEN_INFO=@&quot;$(_BM_SHELLSCORE_ENABLE)&quot;&apos;</div></pre></td></tr></table></figure>
+<p>注：</p>
+<p><code>BM_SHELLSCORE_ENABLE</code>是真真正正能代码中使用的宏</p>
+<p><code>$(_BM_SHELLSCORE_ENABLE)</code>表示取<code>_BM_SHELLSCORE_ENABLE</code>的值</p>
+<ul>
+<li><p><strong>设置局部宏：</strong></p>
+<p>点击<code>Target</code>-<code>Build Phases</code>-点击需要宏的文件-添加<code>Compiler Flags</code>，输入上面一样的的宏定义即可</p>
+<p>注意：</p>
+<p>定义多个宏时，一定要换行，换行的方式是<code>Option+enter</code>键，不能直接<code>enter</code></p>
+</li>
+</ul>
+<p>功能模块控制：</p>
+<p>对于功能模块的代码统一加入宏:</p>
+<p><img src="FlagCode.png" alt=""></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">if</span> BM_SHELLSCORE_ENABLE</span></div><div class="line"><span class="comment">//code here</span></div><div class="line"><span class="meta">#<span class="meta-keyword">else</span></span></div><div class="line"><span class="comment">//code here</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div></pre></td></tr></table></figure>
+<p>这时候，你就可以通过更改工程文件-Target里Build Setting里的User-Deifined值来控制是否开启这项功能</p>
+<h4 id="User-Defined扩展"><a href="#User-Defined扩展" class="headerlink" title="User-Defined扩展"></a>User-Defined扩展</h4><p>而对于String类型的宏更多用于在不同编译版本下设置不同的URL，因为一般来说测试环境与正式环境访问的地址，域名都不一样，那么就可以通过User-Defined里一个字段下面的Debug、Release设置不同的URL，就可以实现同一段代码访问同一个宏，实际使用的是不同值的情况</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;前言&quot;&gt;&lt;a href=&quot;#前言&quot; class=&quot;headerlink&quot; title=&quot;前言&quot;&gt;&lt;/a&gt;前言&lt;/h2&gt;&lt;p&gt;很多时候会出现一种情况：同一个工程文件需要生成多个相似的app&lt;/p&gt;
+&lt;p&gt;比如：&lt;/p&gt;
+&lt;p&gt;同一个app的Pro、Lite、Free版&lt;/p&gt;
+&lt;p&gt;同一个模板工程应用于不同app&lt;/p&gt;
+&lt;p&gt;同一个app的iPad、iPhone版&lt;/p&gt;
+&lt;p&gt;在这种情况下，就需要在一个Xcode工程下添加多个Target来实现，这里我们就来看下，如何在一个工程下进行多Target开发&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/categories/iOS/"/>
+    
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/tags/iOS/"/>
+    
+      <category term="Xcode" scheme="http://alfredzhenyu.github.io/tags/Xcode/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Objc的Runtime源码解读（三）之消息（Messaging）机制</title>
+    <link href="http://alfredzhenyu.github.io/2017/01/11/Objc%E7%9A%84Runtime%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%EF%BC%88%E4%B8%89%EF%BC%89%E4%B9%8B%E6%B6%88%E6%81%AF%EF%BC%88Messaging%EF%BC%89%E6%9C%BA%E5%88%B6/"/>
+    <id>http://alfredzhenyu.github.io/2017/01/11/Objc的Runtime源码解读（三）之消息（Messaging）机制/</id>
+    <published>2017-01-11T08:54:46.000Z</published>
+    <updated>2017-02-05T03:20:02.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录：</p>
+<ul>
+<li>消息传递机制<ul>
+<li>​</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h2 id="消息传递-Messaging"><a href="#消息传递-Messaging" class="headerlink" title="消息传递(Messaging)"></a>消息传递(Messaging)</h2><blockquote>
+<p>I’m sorry that I long ago coined the term “objects” for this topic because it gets many people to focus on the lesser idea. <strong>The big idea is “messaging</strong>” – that is what the kernal[sic] of Smalltalk is all about… The key in making great and growable systems is much more to design how its modules communicate rather than what their internal properties and behaviors should be.</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;消息传递机制&lt;ul&gt;
+&lt;li&gt;​&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/categories/iOS/"/>
+    
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/tags/iOS/"/>
+    
+      <category term="Objc" scheme="http://alfredzhenyu.github.io/tags/Objc/"/>
+    
+      <category term="源码解析" scheme="http://alfredzhenyu.github.io/tags/%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Objc的Runtime源码解读（二）之方法的存储</title>
+    <link href="http://alfredzhenyu.github.io/2017/01/09/Objc%E7%9A%84Runtime%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%EF%BC%88%E4%BA%8C%EF%BC%89%E4%B9%8B%E6%96%B9%E6%B3%95%E7%9A%84%E5%AD%98%E5%82%A8/"/>
+    <id>http://alfredzhenyu.github.io/2017/01/09/Objc的Runtime源码解读（二）之方法的存储/</id>
+    <published>2017-01-09T08:50:25.000Z</published>
+    <updated>2017-02-05T03:20:06.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录：</p>
+<ul>
+<li>方法的存储<ul>
+<li><code>class_data_bits</code>结构体</li>
+<li><code>class_rw_t</code>和<code>class_ro_t</code>结构体</li>
+<li>从<code>realizeClass</code>看方法的存储</li>
+<li>相关源码</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h2 id="class-data-bits-结构体"><a href="#class-data-bits-结构体" class="headerlink" title="class_data_bits 结构体"></a><code>class_data_bits</code> 结构体</h2><p>正如上篇文章提到的一样，方法储存在<code>obj_class</code>的<code>class_data_bits</code>类型的结构体里</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_class : objc_object &#123;</div><div class="line">    <span class="keyword">isa_t</span> isa;</div><div class="line">    Class superclass;</div><div class="line">    <span class="keyword">cache_t</span> cache;             <span class="comment">// formerly cache pointer and vtable</span></div><div class="line">    <span class="keyword">class_data_bits_t</span> bits;    <span class="comment">// class_rw_t * plus custom rr/alloc flags</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p><code>class_data_bits</code> 结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">class_data_bits_t</span> &#123;</div><div class="line">    <span class="keyword">uintptr_t</span> bits;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>下面我们来看下这里的bits每一位的含义：</p>
+<p>注意到在objc_class注释里写的 <code>class_data_bits_t</code> 相当于 <code>class_rw_t</code> 指针加上 rr/alloc 的标志。而在<code>class_data_bits_t</code>的方法中可以看到下面这个方法便捷的返回<code>class_rw_t *</code> 指针</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// data pointer</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FAST_DATA_MASK          0x00007ffffffffff8UL</span></div><div class="line"><span class="keyword">class_rw_t</span>* data() &#123;</div><div class="line">   <span class="keyword">return</span> (<span class="keyword">class_rw_t</span> *)(bits &amp; FAST_DATA_MASK);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看出 <code>class_rw_t *</code> 指针的地址从第3到第47位</p>
+<p><img src="objc-method-class_data_bits_t.png" alt=""></p>
+<p>而bits的其他位：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#define FAST_IS_SWIFT           (1UL&lt;&lt;0)</div><div class="line">#define FAST_HAS_DEFAULT_RR     (1UL&lt;&lt;1)</div><div class="line">#define FAST_REQUIRES_RAW_ISA   (1UL&lt;&lt;2)</div><div class="line">#define FAST_DATA_MASK          0x00007ffffffffff8UL</div></pre></td></tr></table></figure>
+<ul>
+<li><code>isSwift()``FAST_IS_SWIFT</code> 用于判断 Swift 类</li>
+<li><code>hasDefaultRR()``FAST_HAS_DEFAULT_RR</code> 当前类或者父类含有默认的 <code>retain/release/autorelease/retainCount/_tryRetain/_isDeallocating/retainWeakReference/allowsWeakReference</code> 方法</li>
+<li><code>requiresRawIsa()``FAST_REQUIRES_RAW_ISA</code> 当前类的实例需要 raw <code>isa</code></li>
+</ul>
+<p>注：通过 <code>objc_class</code> 中的 <code>data()</code> 方法和 <code>class_data_bits_t</code> 中的 <code>data()</code> 方法返回的是同一个<code>class_rw_t *</code>指针</p>
+<h2 id="class-rw-t和class-ro-t结构体"><a href="#class-rw-t和class-ro-t结构体" class="headerlink" title="class_rw_t和class_ro_t结构体"></a><code>class_rw_t</code>和<code>class_ro_t</code>结构体</h2><h3 id="class-rw-t源码"><a href="#class-rw-t源码" class="headerlink" title="class_rw_t源码"></a><code>class_rw_t</code>源码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">class_rw_t</span> &#123;</div><div class="line">    <span class="keyword">uint32_t</span> flags;</div><div class="line">    <span class="keyword">uint32_t</span> version;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">class_ro_t</span> *ro;</div><div class="line"></div><div class="line">    <span class="keyword">method_array_t</span> methods;</div><div class="line">    <span class="keyword">property_array_t</span> properties;</div><div class="line">    <span class="keyword">protocol_array_t</span> protocols;</div><div class="line"></div><div class="line">    Class firstSubclass;</div><div class="line">    Class nextSiblingClass;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>可以看到:</p>
+<p>这里面存储着属性(properties)、方法(methods)、遵循的协议(protocols)</p>
+<p>同时这内部还有一个指针叫做<code>ro</code>，类型为<code>class_ro_t</code></p>
+<p>我们再来看下<code>class_ro_t</code>的源码</p>
+<h3 id="class-ro-t源码"><a href="#class-ro-t源码" class="headerlink" title="class_ro_t源码"></a><code>class_ro_t</code>源码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">class_ro_t</span> &#123;</div><div class="line">    <span class="keyword">uint32_t</span> flags;</div><div class="line">    <span class="keyword">uint32_t</span> instanceStart;</div><div class="line">    <span class="keyword">uint32_t</span> instanceSize;</div><div class="line">    <span class="keyword">uint32_t</span> reserved;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">uint8_t</span> * ivarLayout;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> * name;</div><div class="line">    <span class="keyword">method_list_t</span> * baseMethodList;</div><div class="line">    <span class="keyword">protocol_list_t</span> * baseProtocols;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">ivar_list_t</span> * ivars;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">uint8_t</span> * weakIvarLayout;</div><div class="line">    <span class="keyword">property_list_t</span> *baseProperties;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>发现这两个有点像也有属性、方法、协议</p>
+<p>从字面上就可以理解这两个的差别：</p>
+<ul>
+<li>ro：read only。存储的是当前类在编译期间就已经确定的属性(baseProperties)、方法(baseMethodList)以及遵循的协议(baseProtocols)</li>
+<li>rw：read write。存储的是一些自己实现的方法（包括分类）(methods)、属性(properties)、以及遵循的协议(protocols)</li>
+</ul>
+<p>要想深入理解方法的存储可以看下<code>class_ro_t</code>和 <code>class_rw_t</code>在加载ObjC运行时是怎么调用的，可以找到 <code>realizeClass</code> 这个方法</p>
+<h3 id="从realizeClass看方法的存储"><a href="#从realizeClass看方法的存储" class="headerlink" title="从realizeClass看方法的存储"></a>从<code>realizeClass</code>看方法的存储</h3><p>主要看下方法内部<code>class_ro_t</code>和 <code>class_rw_t</code>相关的部分：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> <span class="keyword">class_ro_t</span> *ro = (<span class="keyword">const</span> <span class="keyword">class_ro_t</span> *)cls-&gt;data();</div><div class="line"><span class="keyword">class_rw_t</span> *rw = (<span class="keyword">class_rw_t</span> *)<span class="built_in">calloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">class_rw_t</span>), <span class="number">1</span>);</div><div class="line">rw-&gt;ro = ro;</div><div class="line">rw-&gt;flags = RW_REALIZED|RW_REALIZING;</div><div class="line">cls-&gt;setData(rw);</div></pre></td></tr></table></figure>
+<p>主要的步骤：</p>
+<ol>
+<li>从 <code>class_data_bits_t</code> 调用 <code>data</code> 方法，将结果从 <code>class_rw_t</code> 强制转换为 <code>class_ro_t</code> 指针</li>
+<li>初始化一个 <code>class_rw_t</code> 结构体</li>
+<li>设置结构体 <code>ro</code> 的值以及 <code>flag</code></li>
+<li>最后设置正确的 <code>data</code>。</li>
+</ol>
+<p>从这里可以get到：</p>
+<p><code>realizeClass</code> 方法执行前</p>
+<p><img src="objc-method-before-realize-class.png" alt=""></p>
+<p><code>realizeClass</code> 方法执行后</p>
+<p><img src="objc-method-after-realize-class.png" alt=""></p>
+<p>实际上：</p>
+<ul>
+<li><strong>在编译期间</strong>类的结构中的 <code>class_data_bits_t *data</code> 指向的是一个 <code>class_ro_t *</code> 指针</li>
+<li><strong>在加载运行时代码运行<code>realizeClass</code> </strong>之后，<code>class_data_bits_t *data</code> 才指向 <code>class_rw_t</code> 指针。</li>
+</ul>
+<p>但此时方法，属性以及协议列表均为空。这时需要 <code>realizeClass</code> 调用 <code>methodizeClass</code> 方法来<strong>将类自己实现的方法（包括分类）、属性和遵循的协议加载到 methods、 properties 和 protocols 列表中</strong></p>
+<p>备注：</p>
+<p><code>realizeClass</code>主要作用是对类进行第一次初始化包括</p>
+<ul>
+<li>分配可读写数据空间（<code>class_rw_t</code>）</li>
+<li>返回真正的类结构（<code>Class</code>）</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> Class <span class="title">realizeClass</span><span class="params">(Class cls)</span></span></div></pre></td></tr></table></figure>
+<h2 id="相关源码"><a href="#相关源码" class="headerlink" title="相关源码"></a>相关源码</h2><blockquote>
+<p>TODO:补充相关代码解析注释</p>
+</blockquote>
+<h3 id="方法结构体"><a href="#方法结构体" class="headerlink" title="方法结构体"></a>方法结构体</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">method_t</span> &#123;</div><div class="line">    SEL name;<span class="comment">//方法名</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *types;<span class="comment">//在ObjC中叫做类型编码(Type Encoding)</span></div><div class="line">    IMP imp;<span class="comment">//实现的指针</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="属性结构体"><a href="#属性结构体" class="headerlink" title="属性结构体"></a>属性结构体</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">property_t</span> &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *attributes;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="协议结构体"><a href="#协议结构体" class="headerlink" title="协议结构体"></a>协议结构体</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">protocol_t</span> : objc_object &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *mangledName;</div><div class="line">    <span class="keyword">struct</span> <span class="keyword">protocol_list_t</span> *protocols;</div><div class="line">    <span class="keyword">method_list_t</span> *instanceMethods;</div><div class="line">    <span class="keyword">method_list_t</span> *classMethods;</div><div class="line">    <span class="keyword">method_list_t</span> *optionalInstanceMethods;</div><div class="line">    <span class="keyword">method_list_t</span> *optionalClassMethods;</div><div class="line">    <span class="keyword">property_list_t</span> *instanceProperties;</div><div class="line">    <span class="keyword">uint32_t</span> size;   <span class="comment">// sizeof(protocol_t)</span></div><div class="line">    <span class="keyword">uint32_t</span> flags;</div><div class="line">    <span class="comment">// Fields below this point are not always present on disk.</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> **_extendedMethodTypes;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *_demangledName;</div><div class="line">    <span class="keyword">property_list_t</span> *_classProperties;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">const</span> <span class="keyword">char</span> *<span class="title">demangledName</span><span class="params">()</span></span>;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>​</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://github.com/Draveness/iOS-Source-Code-Analyze/blob/master/contents/objc/%E4%BB%8E%20NSObject%20%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BA%86%E8%A7%A3%20isa.md#ISA" target="_blank" rel="external">Draveness的github</a></li>
+<li><a href="http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html" target="_blank" rel="external">Classes and Metaclasses</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Tagged_pointer" target="_blank" rel="external">Tagged Pointer</a></li>
+<li><a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html" target="_blank" rel="external">类型编码</a></li>
+<li><a href="http://nshipster.cn/type-encodings/" target="_blank" rel="external">Type Encodings</a></li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;方法的存储&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;class_data_bits&lt;/code&gt;结构体&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;class_rw_t&lt;/code&gt;和&lt;code&gt;class_ro_t&lt;/code&gt;结构体&lt;/li&gt;
+&lt;li&gt;从&lt;code&gt;realizeClass&lt;/code&gt;看方法的存储&lt;/li&gt;
+&lt;li&gt;相关源码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/categories/iOS/"/>
+    
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/tags/iOS/"/>
+    
+      <category term="Objc" scheme="http://alfredzhenyu.github.io/tags/Objc/"/>
+    
+      <category term="源码解析" scheme="http://alfredzhenyu.github.io/tags/%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Objc的Runtime源码解读（一）之isa指针</title>
+    <link href="http://alfredzhenyu.github.io/2017/01/09/Objc%E7%9A%84Runtime%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%EF%BC%88%E4%B8%80%EF%BC%89%E4%B9%8Bisa%E6%8C%87%E9%92%88/"/>
+    <id>http://alfredzhenyu.github.io/2017/01/09/Objc的Runtime源码解读（一）之isa指针/</id>
+    <published>2017-01-09T02:22:43.000Z</published>
+    <updated>2017-02-05T03:19:57.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录：</p>
+<ul>
+<li>isa指针<ul>
+<li><code>objc_object</code>和<code>objc_class</code>结构体</li>
+<li><code>isa</code>指针的作用</li>
+<li><code>isa_t</code>结构体</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h2 id="objc-object和objc-class结构体"><a href="#objc-object和objc-class结构体" class="headerlink" title="objc_object和objc_class结构体"></a><code>objc_object</code>和<code>objc_class</code>结构体</h2><ul>
+<li><p>ObjC都是C语言结构体，所有对象都包含一个类型为isa_t的isa指针</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_object &#123;</div><div class="line">    <span class="keyword">isa_t</span> isa;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>所有继承自NSObject的类的实例化后的对象都会包含一个类型为isa_t的结构体​</p>
+</li>
+<li><p>在ObjC的Class定义为一个名为<code>objc_class</code> 的结构体：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_class : objc_object &#123;</div><div class="line">    <span class="keyword">isa_t</span> isa;</div><div class="line">    Class superclass;</div><div class="line">    <span class="keyword">cache_t</span> cache;</div><div class="line">    <span class="keyword">class_data_bits_t</span> bits;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>可以看出<code>objc_class</code> 结构体是继承自 <code>objc_object</code> 的，所有的类也有一个isa，所以Objc中的类本身也是一个对象</p>
+</li>
+</ul>
+<h2 id="isa指针的作用"><a href="#isa指针的作用" class="headerlink" title="isa指针的作用"></a>isa指针的作用</h2><p>首先对象的方法（实例方法、类方法）是不存储在对象的结构体中的，不然创建同一个类的不同对象会造成内存的冗余，所以：</p>
+<ul>
+<li><strong>当实例方法被调用时，会通过对象的isa来查找对应的类，然后在<code>class_data_bits_t</code> 结构体中查找对应方法的实现，同时使用 <code>super_class</code> 来查找继承的类，进而找到继承的方法</strong></li>
+<li><strong>当类方法被调用时，会通过类的isa来查找对应的元类，然后在元类查找对应类方法的实现，以保证通过相同的机制来查找方法的实现</strong></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//<span class="doctag">TODO:</span>元类和类共用一套实现代码，怎样通过类方法查找类方法的</span></div></pre></td></tr></table></figure>
+<p><img src="objc-isa-class-diagram.png" alt=""></p>
+<p>上图是各个对象的isa的指向图，这里需要注意的是，在64位以后才有的isa_t类型这个结构体，需要通过一定的处理才能得到他需要指向的对象，而在64位以前是isa类型，单纯的指向它需要的对象，下面会讲到。</p>
+<p>​</p>
+<h2 id="isa-t结构体"><a href="#isa-t结构体" class="headerlink" title="isa_t结构体"></a>isa_t结构体</h2><ul>
+<li><p>源码定义：</p>
+<ul>
+<li>x86_64:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">#define ISA_MASK        0x00007ffffffffff8ULL</div><div class="line">#define ISA_MAGIC_MASK  0x001f800000000001ULL</div><div class="line">#define ISA_MAGIC_VALUE 0x001d800000000001ULL</div><div class="line">#define RC_ONE   (1ULL&lt;&lt;56)</div><div class="line">#define RC_HALF  (1ULL&lt;&lt;7)</div><div class="line"></div><div class="line">union isa_t &#123;</div><div class="line">    isa_t() &#123; &#125;</div><div class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125;</div><div class="line"></div><div class="line">    Class cls;</div><div class="line">    uintptr_t bits;</div><div class="line"></div><div class="line">    struct &#123;</div><div class="line">        uintptr_t indexed           : 1;</div><div class="line">        uintptr_t has_assoc         : 1;</div><div class="line">        uintptr_t has_cxx_dtor      : 1;</div><div class="line">        uintptr_t shiftcls          : 44;</div><div class="line">        uintptr_t magic             : 6;</div><div class="line">        uintptr_t weakly_referenced : 1;</div><div class="line">        uintptr_t deallocating      : 1;</div><div class="line">        uintptr_t has_sidetable_rc  : 1;</div><div class="line">        uintptr_t extra_rc          : 8;</div><div class="line">    &#125;;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<ul>
+<li>arm64:</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">#define ISA_MASK        0x0000000ffffffff8ULL</div><div class="line">#define ISA_MAGIC_MASK  0x000003f000000001ULL</div><div class="line">#define ISA_MAGIC_VALUE 0x000001a000000001ULL</div><div class="line">#define RC_ONE   (1ULL&lt;&lt;45)</div><div class="line">#define RC_HALF  (1ULL&lt;&lt;18)</div><div class="line">union isa_t &#123;</div><div class="line">    isa_t() &#123; &#125;</div><div class="line">    isa_t(uintptr_t value) : bits(value) &#123; &#125;</div><div class="line"></div><div class="line">    Class cls;</div><div class="line">    uintptr_t bits;</div><div class="line"></div><div class="line">    struct &#123;</div><div class="line">       uintptr_t indexed           : 1;</div><div class="line">       uintptr_t has_assoc         : 1;</div><div class="line">       uintptr_t has_cxx_dtor      : 1;</div><div class="line">       uintptr_t shiftcls          : 33;</div><div class="line">       uintptr_t magic             : 6;</div><div class="line">       uintptr_t weakly_referenced : 1;</div><div class="line">       uintptr_t deallocating      : 1;</div><div class="line">       uintptr_t has_sidetable_rc  : 1;</div><div class="line">       uintptr_t extra_rc          : 19;</div><div class="line">    &#125;;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>（MacOS，虚拟机是x86_64，而iOS是arm64）</p>
+<p>可以看出不同的架构上，字段是一样的，只不过位数和实现上有些差别，这里统一用x86的来讲解</p>
+</li>
+<li><p><code>isa_t</code> 是一个 <code>union</code> 类型的结构体。其中的 <code>isa_t</code>、<code>cls</code>、 <code>bits</code> 还有结构体共用同一块地址空间。而实际上 <code>isa</code> 总共会占据 64 位的内存空间，可以从<code>bits</code>看出来</p>
+<p><img src="objc-isa-isat.png" alt=""></p>
+</li>
+<li><p>下面我们从初始化的过程来看这64位每一位的意义：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">inline</span> <span class="keyword">void</span> </div><div class="line">objc_object::initInstanceIsa(Class cls, <span class="keyword">bool</span> hasCxxDtor)</div><div class="line">&#123;</div><div class="line">    initIsa(cls, <span class="literal">true</span>, hasCxxDtor);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">inline</span> <span class="keyword">void</span> </div><div class="line">objc_object::initIsa(Class cls, <span class="keyword">bool</span> indexed, <span class="keyword">bool</span> hasCxxDtor) </div><div class="line">&#123; </div><div class="line">    <span class="keyword">if</span> (!indexed) &#123;</div><div class="line">        isa.cls = cls;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        isa.bits = ISA_MAGIC_VALUE;</div><div class="line">        isa.has_cxx_dtor = hasCxxDtor;</div><div class="line">        isa.shiftcls = (<span class="keyword">uintptr_t</span>)cls &gt;&gt; <span class="number">3</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>对整个 <code>isa</code> 的值 <code>bits</code> 进行设置，传入 <code>ISA_MAGIC_VALUE</code>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> ISA_MAGIC_VALUE 0x001d800000000001ULL</span></div></pre></td></tr></table></figure>
+<p><img src="objc-isa-isat-bits.png" alt=""></p>
+<p>可以看出实际上设置的是<code>indexed</code>以及<code>magic</code>这两个字段</p>
+</li>
+<li><p><code>indexed</code>表示<code>isa_t</code>类型：</p>
+<ul>
+<li>0在迁移到64位之前的时候使用，这时候的isa是没有struct部分，通过object-&gt;isa得到的是cls的指针（那时不是isa_t类型，而是isa类型）</li>
+<li>1在迁移到64位之后的时候使用，这时候的isa增加了struct部分，通过object-&gt;isa得到的是64位的bits值（需要用<code>shiftcls</code>位的偏移来获取cls的指针）</li>
+</ul>
+</li>
+<li><p><code>magic</code>的值为0x3b用于调试器判断当前对象是真的对象还是没初始化的空间</p>
+<blockquote>
+<p>TODO: magic值具体怎么判断当前对象的</p>
+</blockquote>
+</li>
+<li><p><code>has_cxx_dtor</code>实际上也是64位中的1位，表示当前对象时候有C++、ObjC的析构器</p>
+</li>
+<li><p><code>shiftcls</code>就是类指针，因为类指针规定要按照字节（8bit）对齐内存，所以后三位bit为000（可以输出[NSObject class]指针看下），这里为了减小内存消耗，特意右移3位写进shiftcls内，这个字段就相当于64位以前的isa类型指针，遵循上面的指向图</p>
+<p>【同时可以打印对象指针，可以发现对象内存地址的后四位都是0，说明ObjC在初始化内存时是以16字节对齐的，分配的内存地址后四位都是0】</p>
+<p>注意：</p>
+<p>由于改版至64位，不可以通过object-&gt;isa直接获取cls指针，所以新增了ISA()方法来获取</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> ISA_MASK 0x00007ffffffffff8ULL</span></div><div class="line"><span class="keyword">inline</span> Class </div><div class="line">objc_object::ISA() </div><div class="line">&#123;</div><div class="line">    <span class="keyword">return</span> (Class)(isa.bits &amp; ISA_MASK);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>​</p>
+</li>
+<li><p>其他bits</p>
+<p>在 <code>isa_t</code> 中，我们还有一些没有介绍的其它 bits，在这个小结就简单介绍下这些 bits 的作用</p>
+<ul>
+<li><code>has_assoc</code>对象含有或者曾经含有关联引用，没有关联引用的可以更快地释放内存</li>
+<li><code>weakly_referenced</code>对象被指向或者曾经指向一个 ARC 的弱变量，没有弱引用的对象可以更快释放</li>
+<li><code>deallocating</code>对象正在释放内存</li>
+<li><code>has_sidetable_rc</code>对象的引用计数太大了，存不下</li>
+<li><code>extra_rc</code>对象的引用计数超过 1，会存在这个这个里面，如果引用计数为 10，<code>extra_rc</code> 的值就为 9</li>
+</ul>
+</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><p><a href="https://github.com/Draveness/iOS-Source-Code-Analyze/blob/master/contents/objc/%E4%BB%8E%20NSObject%20%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BA%86%E8%A7%A3%20isa.md#ISA" target="_blank" rel="external">Draveness的github</a></p>
+</li>
+<li><p><a href="https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtHowMessagingWorks.html" target="_blank" rel="external">Objective-C Runtime Programming Guide</a></p>
+</li>
+<li><p><a href="http://www.cocoawithlove.com/2010/01/what-is-meta-class-in-objective-c.html" target="_blank" rel="external">What is a meta-class in Objective-C?</a></p>
+</li>
+<li><p><a href="http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html" target="_blank" rel="external">objc_explain_Classes_and_metaclasses</a></p>
+</li>
+<li><p><a href="http://stackoverflow.com/questions/18997362/storing-things-in-isa" target="_blank" rel="external">Storing things in isa</a></p>
+</li>
+<li><p><a href="http://stackoverflow.com/questions/252552/why-do-we-need-c-unions" target="_blank" rel="external">Why do we need C Unions?</a></p>
+</li>
+<li><p><a href="http://www.sealiesoftware.com/blog/archive/2013/09/24/objc_explain_Non-pointer_isa.html" target="_blank" rel="external">objc_explain_Non-pointer_isa</a></p>
+</li>
+<li><p><a href="https://en.wikipedia.org/wiki/Tagged_pointer" target="_blank" rel="external">Tagged Pointer</a></p>
+</li>
+<li><p><a href="https://www.mikeash.com/pyblog/friday-qa-2013-09-27-arm64-and-you.html" target="_blank" rel="external">ARM64 and You</a></p>
+</li>
+<li><p><a href="http://blog.xcodev.com/posts/tagged-pointer-and-64-bit/" target="_blank" rel="external">64位与Tagged Pointer</a></p>
+<p>​</p>
+</li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;isa指针&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;objc_object&lt;/code&gt;和&lt;code&gt;objc_class&lt;/code&gt;结构体&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;isa&lt;/code&gt;指针的作用&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;isa_t&lt;/code&gt;结构体&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/categories/iOS/"/>
+    
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/tags/iOS/"/>
+    
+      <category term="Objc" scheme="http://alfredzhenyu.github.io/tags/Objc/"/>
+    
+      <category term="源码解析" scheme="http://alfredzhenyu.github.io/tags/%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>CoreFoundation源码解读之CFArray</title>
+    <link href="http://alfredzhenyu.github.io/2017/01/06/CoreFoundation%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%E4%B9%8BCFArray/"/>
+    <id>http://alfredzhenyu.github.io/2017/01/06/CoreFoundation源码解读之CFArray/</id>
+    <published>2017-01-06T08:10:17.000Z</published>
+    <updated>2017-01-09T07:14:31.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>占个坑…有空再来写</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;占个坑…有空再来写&lt;/p&gt;
+
+    
+    </summary>
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/categories/iOS/"/>
+    
+    
+      <category term="iOS" scheme="http://alfredzhenyu.github.io/tags/iOS/"/>
+    
+      <category term="Objc" scheme="http://alfredzhenyu.github.io/tags/Objc/"/>
+    
+      <category term="源码解析" scheme="http://alfredzhenyu.github.io/tags/%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>《Web性能权威指南》读书笔记（五）</title>
+    <link href="http://alfredzhenyu.github.io/2017/01/04/%E3%80%8AWeb%E6%80%A7%E8%83%BD%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%94%EF%BC%89/"/>
+    <id>http://alfredzhenyu.github.io/2017/01/04/《Web性能权威指南》读书笔记（五）/</id>
+    <published>2017-01-04T02:07:00.000Z</published>
+    <updated>2017-02-05T03:20:56.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录：</p>
+<ul>
+<li>第三部分 HTTP<ul>
+<li>第十二章 HTTP 2.x</li>
+<li>第十三章 优化应用的交付</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h1 id="第三部分-HTTP"><a href="#第三部分-HTTP" class="headerlink" title="第三部分 HTTP"></a>第三部分 HTTP</h1><h2 id="第十二章-HTTP-2-x"><a href="#第十二章-HTTP-2-x" class="headerlink" title="第十二章 HTTP 2.x"></a>第十二章 HTTP 2.x</h2><h3 id="二进制分帧层"><a href="#二进制分帧层" class="headerlink" title="二进制分帧层"></a>二进制分帧层</h3><p><img src="二进制分帧层.png" alt=""><br>二进制分层指的是位于套接字接口与应用可见的高层HTTP API之间的一个新机制：HTTP 1.x是以换行符作为纯文本的分隔符，而HTTP2.0则将所有传输的信息分割为更小的消息和帧，并对它们采用二进制格式的编码。</p>
+<h3 id="流、消息、帧"><a href="#流、消息、帧" class="headerlink" title="流、消息、帧"></a>流、消息、帧</h3><p>为了理解二进制分层引入一下几个新概念：</p>
+<ul>
+<li>流：已建立的连接上的双向字节流。<em> 消息：与逻辑消息对应的完整的一系列数据帧。</em> 帧：HTTP 2.0 通信的最小单位，每个帧包含帧首部，至少也会标识出当前帧所属的流。</li>
+</ul>
+<p><strong>所有 HTTP 2.0 通信都在一个TCP连接上完成，这个连接可以承载任意数量的双向数据流。相应地，每个数据流（请求、响应）以消息的形式发送，而消息由一或多个帧组成，这些帧可以乱序发送，然后再根据每个帧首部的流标识符重新组装。</strong><br>这样，<strong>HTTP 2.0 把 HTTP 协议通信的基本单位缩小为一个一个的帧</strong>，这些帧对应着逻辑流中的消息。相应地，<strong>很多流可以并行地在同一个 TCP 连接上交换消息。</strong></p>
+<p>举个例子：<br><img src="HTTP2.0共享连接.png" alt=""><br>图 12-3 中包含了同一个连接上多个传输中的数据流:客户端正在向服务器传输一个 DATA 帧(stream 5)，与此同时，服务器正向客户端乱序发送 stream 1 和 stream 3 的一系列帧。此时，一个连接上有 3 个请求 / 响应并行交换!</p>
+<p>这样做的优势：</p>
+<ul>
+<li>可以并行交错地发送请求，请求之间互不影响;<em> 可以并行交错地发送响应，响应之间互不干扰;</em> 只使用一个连接即可并行发送多个请求和响应;<em> 消除不必要的延迟，从而减少页面加载的时间;</em> 不必再为绕过 HTTP 1.x 限制而多做很多工作;</li>
+</ul>
+<h3 id="请求优先级"><a href="#请求优先级" class="headerlink" title="请求优先级"></a>请求优先级</h3><p>把 HTTP 消息分解为很多独立的帧的另外一个优势：可以通过优化这些帧的交错和传输顺序，进一步提升性能。<br>HTTP2.0通过往每个流中加入一个31bit的优先级字段<em> <strong>0 表示最高优先级</strong></em> <strong>231-1 表示最低优先级</strong></p>
+<p>这样，客户端和服务器就可以在处理不同的流时采取不同的策略，以最优的方式发送流、消息和帧。<br>具体来讲，服务器可以根据流的优先级，控制资源分配(CPU、内存、带宽)，而在响应数据准备好之后，优先将最高优先级的帧发送给客户端。</p>
+<h3 id="每个来源一个连接"><a href="#每个来源一个连接" class="headerlink" title="每个来源一个连接"></a>每个来源一个连接</h3><p>新的分帧机制带来的另一个好处就是不用依赖于多个TCP连接或者多域名来实现并行机制，此时所有的HTTP2.0连接都是持久化的，客户端和服务器之间只需要一个连接即可</p>
+<h3 id="流量控制"><a href="#流量控制" class="headerlink" title="流量控制"></a>流量控制</h3><p>HTTP2.0为数据流和连接提供一个简单的流量控制，这个机制实际上和TCP的流量控制是一样的。然而，由于 TCP 流量控制不能对同一条 HTTP 2.0 连接内的多个流实施差异化策略，因此光有TCP的流量控制是不够的。这正是 HTTP 2.0 流量控制机制出台的原因。</p>
+<p>HTTP 2.0 标准没有规定任何特定的算法、值，或者什么时候发送 WINDOW_UPDATE 帧。 因此，实现可以选择自己的算法以匹配自己的应用场景，从而求得最佳性能。</p>
+<p><strong>TODO：进一步了解HTTP2.0如何实现流量控制的</strong></p>
+<h3 id="服务器推送"><a href="#服务器推送" class="headerlink" title="服务器推送"></a>服务器推送</h3><p>HTTP 2.0 新增的一个强大的新功能，就是服务器可以对一个客户端请求发送多个响应。换句话说，除了对最初请求的响应外，服务器还可以额外向客户端推送资源，而无需客户端明确地请求。<br>建立 HTTP 2.0 连接后，客户端与服务器交换 SETTINGS 帧，借此可以限定双向并发的流的最大数量。因此，客户端可以限定推送流的数量，或者通过把这个值设置为 0 而完全禁用服务器推送。</p>
+<h3 id="首部压缩"><a href="#首部压缩" class="headerlink" title="首部压缩"></a>首部压缩</h3><p>在HTTP1.x中由于元数据都是以纯文本方式，通常会给每个请求增加500~800字节的负荷，为提高性能，HTTP 2.0会压缩首部元数据：<br>压缩采用的是首部的差异化编码的方式实现的：<br><strong>客户端和服务端共同维护一张“首部表”来跟踪和存储之前的键-值对，在同一连接中始终存在，有客户端、服务器共同渐进地更新，每个新的首部键-值要么追加到当前表的末尾、要么替换当前的值。而对于相同的数据，不再在每次请求和响应中发送，</strong><br>举个例子：<br><img src="差异化编码.png" alt=""><br>第二个请求只需要发送变化了的路径首部(:path)，其他首部没有变化，不用再发送。这样就可以避免传输冗余的首部，从而显著减少每个请求的开销。</p>
+<h3 id="HTTP2-0升级"><a href="#HTTP2-0升级" class="headerlink" title="HTTP2.0升级"></a>HTTP2.0升级</h3><p>升级HTTP 2.0需要使用到HTTP的Upgrade机制，步骤如下：</p>
+<ol>
+<li>发起带有 HTTP 2.0 Upgrade 首部的 HTTP 1.1 请求</li>
+<li>如果服务器不支持 HTTP 2.0，就立即返回 HTTP 1.1 响应/服务器就会以 HTTP 1.1 格式返回 101 Switching Protocols 响应，然后立即切换到 HTTP 2.0 并使用新的二进制分帧协议返回响应</li>
+</ol>
+<h3 id="分帧首部"><a href="#分帧首部" class="headerlink" title="分帧首部"></a>分帧首部</h3><p><img src="分帧首部.png" alt=""></p>
+<ul>
+<li>16 位的长度前缀意味着一帧大约可以携带 64 KB 数据，不包括 8 字节首部。</li>
+<li>8 位的帧类型字段决定如何解释帧其余部分的内容。</li>
+<li>8 位的标志字段允许不同的帧类型定义特定于帧的消息标志。</li>
+<li>1 位的保留字段始终置为 0。</li>
+<li>31 位的流标识符唯一标识 HTTP 2.0 的流。</li>
+</ul>
+<p>帧类型字段：</p>
+<ul>
+<li>DATA:用于传输 HTTP 消息体。</li>
+<li>HEADERS:用于传输关于流的额外的首部字段。</li>
+<li>PRIORITY:用于指定或重新指定引用资源的优先级。</li>
+<li>RST_STREAM:用于通知流的非正常终止。</li>
+<li>SETTINGS:用于通知两端通信方式的配置数据。</li>
+<li>PUSH_PROMISE:用于发出创建流和服务器引用资源的要约。</li>
+<li>PING:用于计算往返时间，执行“活性”检查。</li>
+<li>GOAWAY:用于通知对端停止在当前连接中创建流。</li>
+<li>WINDOW_UPDATE:用于针对个别流或个别连接实现流量控制。</li>
+<li>CONTINUATION:用于继续一系列首部块片段。</li>
+</ul>
+<h3 id="发起新流"><a href="#发起新流" class="headerlink" title="发起新流"></a>发起新流</h3><p>HTTP 2.0 协议规定客户端和服务器都可以发起新流：<br><strong>客户端新流</strong>：客户端通过发送类型为HEADERS的帧发起新流，新流包含带有新流ID，可选的31位优先值以及HTTP键-值对首部<br><strong>服务端新流</strong>：服务端通过发送类型为PUSH_PROMISE帧来发起推送流，这个帧与HEADERS等效，但它没有优先值<br><strong>由于两端都可以发起新流，流计数器需要一定规则:客户端发起的流具有偶数ID，服务器发起的流具有奇数ID。这样，两端的流ID不会冲突，而且各自持有一个简单的计数器，每次发起新流时递增ID即可。</strong></p>
+<h3 id="发起应用数据"><a href="#发起应用数据" class="headerlink" title="发起应用数据"></a>发起应用数据</h3><p>创建新流并发送HTTP首部之后，之后利用DATA帧发送应用数据，一块应用数据可以分为多个DATA帧，最后一帧要翻转帧首部的END_STREAM字段<br>（HTTP2.0标准要求单帧数据不能超过2^14-1(16383)字节）</p>
+<h2 id="第十三章-优化应用的交付"><a href="#第十三章-优化应用的交付" class="headerlink" title="第十三章 优化应用的交付"></a>第十三章 优化应用的交付</h2><ul>
+<li>减少DNS查找</li>
+<li>重用TCP连接</li>
+<li>减少HTTP重定向</li>
+<li>使用CDN</li>
+<li>去掉不必要的请求</li>
+<li>客户端缓存资源</li>
+<li>传输压缩过的内容</li>
+<li>减少不必要的请求开销</li>
+<li>并行处理请求和响应</li>
+</ul>
+<h3 id="客户端缓存资源"><a href="#客户端缓存资源" class="headerlink" title="客户端缓存资源"></a>客户端缓存资源</h3><p>HTTP传输下可以使用首部字段来实现缓存： </p>
+<ul>
+<li>Cache-Control 首部用于指定缓存时间；</li>
+<li>Last-Modified 和 ETag 首部提供验证机制</li>
+</ul>
+<p>注意两者缺一不可：<br>如果没有指定验证：导致每次都在没有更新的情况下重发相同内容<br>如果没有指定缓存时间：导致每次使用资源时都多余地执行验证检查</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;第三部分 HTTP&lt;ul&gt;
+&lt;li&gt;第十二章 HTTP 2.x&lt;/li&gt;
+&lt;li&gt;第十三章 优化应用的交付&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/categories/%E7%BD%91%E7%BB%9C/"/>
+    
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/tags/%E7%BD%91%E7%BB%9C/"/>
+    
+      <category term="HTTP" scheme="http://alfredzhenyu.github.io/tags/HTTP/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>《Web性能权威指南》读书笔记（四）</title>
+    <link href="http://alfredzhenyu.github.io/2016/12/26/%E3%80%8AWeb%E6%80%A7%E8%83%BD%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%EF%BC%88%E5%9B%9B%EF%BC%89/"/>
+    <id>http://alfredzhenyu.github.io/2016/12/26/《Web性能权威指南》读书笔记（四）/</id>
+    <published>2016-12-26T03:59:41.000Z</published>
+    <updated>2017-02-05T03:20:51.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录：</p>
+<ul>
+<li>第三部分 HTTP<ul>
+<li>第九章 HTTP简史</li>
+<li>第十章 Web性能要点</li>
+<li>第十一章 HTTP 1.x</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h1 id="第三部分-HTTP"><a href="#第三部分-HTTP" class="headerlink" title="第三部分 HTTP"></a>第三部分 HTTP</h1><h2 id="第九章-HTTP简史"><a href="#第九章-HTTP简史" class="headerlink" title="第九章 HTTP简史"></a>第九章 HTTP简史</h2><p>HTTP 0.9：只有一行的协议+悄然起步<br>HTTP 1.0：参考性RFC+迅速发展<br>HTTP 1.1：正式纳入RFC+标准化<br>HTTP 2.0：性能改进+优化</p>
+<h2 id="第十章-Web性能要点"><a href="#第十章-Web性能要点" class="headerlink" title="第十章 Web性能要点"></a>第十章 Web性能要点</h2><p>浏览器优化策略</p>
+<ul>
+<li><strong>基于文档的优化</strong>：熟悉网络协议，了解文档、CSS 和 JavaScript 解析管道，发现和优先安排关键网 络资源，尽早分派请求并取得页面，使其尽快达到可交互的状态。主要方法是优 先获取资源、提前解析等。<em> <em>*推测性优化</em></em>：浏览器可以学习用户的导航模式，执行推测性优化，尝试预测用户的下一次操 作。然后，预先解析 DNS、预先连接可能的目标。</li>
+</ul>
+<p>浏览器采用的技术：</p>
+<ul>
+<li><strong>资源预取和排定优先次序</strong>：文档、CSS 和 JavaScript 解析器可以与网络协议层沟通，声明每种资源的优先 级:初始渲染必需的阻塞资源具有最高优先级，而低优先级的请求可能会被临时 保存在队列中。</li>
+<li><strong>DNS预解析</strong>：对可能的域名进行提前解析，避免将来 HTTP 请求时的 DNS 延迟。预解析可以 通过学习导航历史、用户的鼠标悬停，或其他页面信号来触发。</li>
+<li><strong>TCP预连接</strong>：DNS 解析之后，浏览器可以根据预测的 HTTP 请求，推测性地打开 TCP 连接。 如果猜对的话，则可以节省一次完整的往返(TCP 握手)时间。</li>
+<li><strong>页面预渲染</strong>：某些浏览器可以让我们提示下一个可能的目标，从而在隐藏的标签页中预先渲染 整个页面。这样，当用户真的触发导航时，就能立即切换过来。</li>
+</ul>
+<p>关于网站建设中的优化建议：</p>
+<ul>
+<li><strong>减少DNS查询</strong>：每次域名解析都需要一次网络往返，增加请求的延迟，在查询期间会阻塞请求。<em> <em>*减少HTTP请求</em></em>：任何请求都不如没有请求更快，因此要去掉页面上没有必要的资源</li>
+<li><strong>使用CDN</strong>：从地理上把数据放到接近客户端的地方，可以显著减少每次 TCP 连接的网络延 迟，增加吞吐量。<em> <strong>添加Expires首部并配置ETag标签</strong>：相关资源应该缓存，以避免重复请求每个页面中相同的资源。Expires 首部可用 于指定缓存时间，在这个时间内可以直接从缓存取得资源，完全避免 HTTP 请 求。ETag 及 Last-Modified 首部提供了一个与缓存相关的机制，相当于最后一次 更新的指纹或时间戳。</em> <strong>Gzip资源</strong>：所有文本资源都应该使用 Gzip 压缩，然后再在客户端与服务器间传输。一般来 说，Gzip 可以减少 60%~80% 的文件大小，也是一个相对简单(只要在服务器上 配置一个选项)，但优化效果较好的举措。<em> <em>*避免HTTP重定向</em></em>：HTTP 重定向极其耗时，特别是把客户端定向到一个完全不同的域名的情况下， 还会导致额外的 DNS 查询、TCP 连接延迟，等等。</li>
+</ul>
+<h2 id="第十一章-HTTP-1-x"><a href="#第十一章-HTTP-1-x" class="headerlink" title="第十一章 HTTP 1.x"></a>第十一章 HTTP 1.x</h2><p><strong>对于HTTP1.0的优化策略：升级HTTP1.1</strong></p>
+<p>HTTP1.1特性：</p>
+<ul>
+<li>持久化连接以支持连接重用</li>
+<li>分块传输编码以支持流式响应</li>
+<li>请求管道+支持并行请求处理</li>
+<li>字节服务以支持基于范围的资源请求</li>
+<li>改进的缓存机制</li>
+</ul>
+<h3 id="持久化连接"><a href="#持久化连接" class="headerlink" title="持久化连接"></a>持久化连接</h3><p>非持久化连接<br><img src="非持久化连接.png" alt=""></p>
+<p><strong>持久化连接</strong><br><img src="持久化连接.png" alt=""></p>
+<p>持久 HTTP 可以让我们重用已有的连接来完成多次应用请求，但多次请求必须严格满足先进先出(FIFO)的队列顺序:发送请求，等待响应完成，再发送客户端队列中的下一个请求，HTTP管道是一个很小但对上述工作流却非常重要的一次优化。管道可以让我们把FIFO队列从客户端(请求队列)迁移到服务器(响应队列)。</p>
+<h3 id="HTTP管道"><a href="#HTTP管道" class="headerlink" title="HTTP管道"></a>HTTP管道</h3><p><strong>HTTP管道优化</strong><br><img src="HTTP管道.png" alt=""></p>
+<p><strong>服务器并行处理优化</strong><br><img src="HTTP管道+并行优化.png" alt=""></p>
+<ul>
+<li>HTML 和 CSS 请求同时到达，但先处理的是 HTML 请求;<em> 服务器并行处理两个请求，其中处理 HTML 用时 40 ms，处理 CSS 用时 20 ms;</em> CSS 请求先处理完成，但被缓冲起来以等候发送 HTML 响应;* 发送完 HTML 响应后，再发送服务器缓冲中的 CSS 响应。<br>HTTP 1.x只能严格串行地返回响应。特别是，HTTP 1.x 不允许一个连接上的多个响应数据交错到达(多路复用)，因而一个响应必须完全返回后，下一个响应才会开始传输。</li>
+</ul>
+<p>这个会造成的问题：</p>
+<ul>
+<li>一个慢响应就会阻塞所有后续请求;<em> 并行处理请求时，服务器必须缓冲管道中的响应，从而占用服务器资源，如果有个响应非常大，则很容易形成服务器的受攻击面;</em> 响应失败可能终止 TCP 连接，从页强迫客户端重新发送对所有后续资源的请求，导致重复处理;<em> 由于可能存在中间代理，因此检测管道兼容性，确保可靠性很重要;</em> 如果中间代理不支持管道，那它可能会中断连接，也可能会把所有请求串联起来。</li>
+</ul>
+<p>注意：<br>HTTP 管道技术的应用非常有限，虽然其优点毋庸置疑。今天，一些支持管道的浏览器，通常都将其作为一个高级配置选项，但大多数浏览器都会禁用它。（但如果对服务器和刻画段拥有完全控制的权限，还是建议开启，其中iTunes就利用这个特性，实现性能的优化）</p>
+<h3 id="多个TCP连接"><a href="#多个TCP连接" class="headerlink" title="多个TCP连接"></a>多个TCP连接</h3><p><strong>由于不支持多路复用，浏览器采用允许并行建立多个TCP连接的方式来解决。</strong><br>现实中，大多数现代浏览器，包括桌面和移动浏览器，都支持每个主机打开 6 个连接。<br>这个需要的代价：</p>
+<ul>
+<li>更多的套接字会占用客户端、服务器以及代理的资源，包括内存缓冲区和 CPU 时钟周期;<em> 并行 TCP 流之间竞争共享的带宽;</em> 由于处理多个套接字，实现复杂性更高;* 即使并行 TCP 流，应用的并行能力也受限制。<br>实践中，CPU 和内存占用并非微不足道，由此会导致客户端和服务器端的资源占用量上升，运维成本提高。类似地，由于客户端实现的复杂性提高，开发成本也会提高。最后，说到应用的并行性，这种方式提供的好处还是非常有限的。这不是一个长期的方案。</li>
+</ul>
+<h3 id="域名分区"><a href="#域名分区" class="headerlink" title="域名分区"></a>域名分区</h3><p>和上面的原理方法一样，通过手工把资源分散到多个子域名上，<strong>由于域名不一样，可以突破浏览器的连接限制，实现更高的并行的能力，域名分区使用的越多，并行能力越强</strong><br>这个需要的代价：</p>
+<ul>
+<li>一次额外的 DNS 查询</li>
+<li>每多一个套接字都会多消耗两端的一些资源</li>
+<li>站点必须手工分离这些资源，并分别把它们托管到多个主机上。<br>域名分区是一种合理但又不完美的优化手段。现实当中，真正因同时打开十几个连接而提升性能的站点并不多，如果你最终使用了很多分区，那么你会发现减少资源数量或者将它们合并为更少的请求，反而能带来更大的好处。</li>
+</ul>
+<h3 id="连接与拼合"><a href="#连接与拼合" class="headerlink" title="连接与拼合"></a>连接与拼合</h3><p>最快的请求是不用请求。减少请求次数总是最好的性能优化手段。如果你无论如何也无法减少请求，那么对 HTTP 1.x 而言，<strong>可以考虑把多个资源捆绑打包到一块，通过一次网络请求获取</strong>:</p>
+<ul>
+<li>连接 把多个 JavaScript 或 CSS 文件组合为一个文件。* 拼合 把多张图片组合为一个更大的复合的图片。<br>优势：</li>
+<li>减少协议开销：通过把文件组合成一个资源，可以消除与文件相关的协议开销。* 应用层管道：这两种技术的效果都好像是启用了 HTTP 管道:多个响应的数据前后相继地连接在一起，消除了额外的网络延迟。实际上，就是把管道提高了一层，置入了应用中。<br>问题：</li>
+<li>把所有资源都组合到一个文件经常会导致处理和加载不必要的字节。虽然可 以把它看成一种预获取，但代价则是降低了初始启动的速度。</li>
+<li>假如打包资源变动频率过高，或是资源包过大的情况下，会得不偿失。</li>
+<li>内存占用：即便实际上 只显示了其中的一小块，也要始终把整个图片都保存在内存中</li>
+</ul>
+<h3 id="嵌入资源"><a href="#嵌入资源" class="headerlink" title="嵌入资源"></a>嵌入资源</h3><p><strong>嵌入资源是另一种非常流行的优化方法，把资源嵌入文档可以减少请求的次数</strong>。比如，JavaScript 和 CSS 代码，通过适当的 script 和 style 块可以直接放在页面中，而图片甚至音频或 PDF 文件，都可以通过数据URI的方式嵌入到页面中<br>（实际上，常见的一个经验规则是只考虑嵌入 1~2 KB 以下的资源，因为小于这个标准的资源经常会导致比它自身更高的 HTTP 开销。然而，如果嵌入的资源频繁变更， 又会导致宿主文档的无效缓存率升高）</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;第三部分 HTTP&lt;ul&gt;
+&lt;li&gt;第九章 HTTP简史&lt;/li&gt;
+&lt;li&gt;第十章 Web性能要点&lt;/li&gt;
+&lt;li&gt;第十一章 HTTP 1.x&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/categories/%E7%BD%91%E7%BB%9C/"/>
+    
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/tags/%E7%BD%91%E7%BB%9C/"/>
+    
+      <category term="HTTP" scheme="http://alfredzhenyu.github.io/tags/HTTP/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>《Web性能权威指南》读书笔记（三）</title>
+    <link href="http://alfredzhenyu.github.io/2016/12/26/%E3%80%8AWeb%E6%80%A7%E8%83%BD%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%89%EF%BC%89/"/>
+    <id>http://alfredzhenyu.github.io/2016/12/26/《Web性能权威指南》读书笔记（三）/</id>
+    <published>2016-12-26T02:51:14.000Z</published>
+    <updated>2017-02-05T03:20:45.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录：</p>
+<ul>
+<li>第一部分 网络技术概览<ul>
+<li>第四章 传输层安全（TLS）</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h2 id="第四章-传输层安全"><a href="#第四章-传输层安全" class="headerlink" title="第四章 传输层安全"></a>第四章 传输层安全</h2><p>个人的理解：HTTPS = TLS + HTTP<br><img src="图4.1传输层安全TLS.png" alt=""><br>so：理解TLS，在理解HTTPS中极为重要</p>
+<h3 id="TLS与SSL"><a href="#TLS与SSL" class="headerlink" title="TLS与SSL"></a>TLS与SSL</h3><p>SSL（Secure Sockets Layer，安全套接字）最初是为了保证网上交易安全而开发的一套安全协议，协议通过加密保护客户个人资料，通过认证和完整性检查来确保交易安全，SSL不会影响上层协议，但能保证上层协议的网络通信安全（HTTP、电子邮件、即时通讯）<br>TLS（Transport Layer Security， 传输层安全）：后来被IETF标准化SSL之后改了名字，实际上两者指的是同一个东西，只是在不同时间段，指代不同的协议版本<br>【TLS设计的初衷是在可靠的传输协议（TCP）之上运行的，可是有实现把它放在数据包协议（如UDP）上，形成DTLS（Datagram Transport Layer Security，数据报传输层安全，RFC 6437）旨在以TLS协议为基础，同时兼顾数据包交付模式并提供类似的安全保障】</p>
+<h3 id="基本服务"><a href="#基本服务" class="headerlink" title="基本服务"></a>基本服务</h3><p>TLS目标是在它之上的应用提供三个基本服务：</p>
+<ul>
+<li>加密 混淆数据的机制<em> 身份验证 验证身份标识有效性的机制</em> 完整性 检测消息是否被篡改或伪造的机制</li>
+</ul>
+<p>具体实现：<br><strong>密钥协商</strong>：TLS握手时会采用<strong>公钥密码系统（非对称密钥加密）</strong>的方式，让通信双方不必事先“认识”，即可商定共享的安全密钥<br><strong>身份验证</strong>：TLS时允许通信双方互相验明正身，可以通过相互提供认证证书来验证对方是否是它想联系的服务<br><strong>消息分帧</strong>：使用MAC算法（Message Authentication Code，消息认证码）签署每一条消息。<strong>MAC算法是一个单向加密的散列函数(本质上是一个校验和)，密钥由连接双方协商确定</strong>。只要发送TLS记录，就会生成一个MAC值并附加到该消息中。接收端通过计算和验证这个MAC值来判断消息的完整性和可靠性。</p>
+<h3 id="TLS握手"><a href="#TLS握手" class="headerlink" title="TLS握手"></a>TLS握手</h3><p><img src="图4.2TLS握手协议.png" alt=""><br>• 0 ms:TLS 在可靠的传输层(TCP)之上运行，这意味着首先必须完成 TCP 的“三次握手”，即一次完整的往返。• 56 ms:TCP 连接建立之后，客户端再以纯文本形式发送一些规格说明，比如<strong>它所运行的 TLS 协议的版本、它所支持的加密套件列表，以及它支持或希望使用的另外一 些 TLS 选项</strong>。• 84 ms:然后，服务器取得 TLS 协议版本以备将来通信使用，<strong>从客户端提供的加密套件列表中选择一个，再附上自己的证书【这里应该还有服务器给客户端的公钥，用于非对称加密】</strong>，将响应发送回客户端。作为可选项，<strong>服务器也可以发送一个请求，要求客户端提供证书以及其他 TLS 扩展参数</strong>。• 112 ms:假设两端经过协商确定了共同的版本和加密套件，客户端也高高兴兴地<strong>把自己的证书提供给了服务器</strong>。然后，<strong>客户端会生成一个新的对称密钥，用服务器的公钥来加密，加密后发送给服务器，告诉服务器可以开始加密通信了</strong>。</p>
+<blockquote>
+<p><strong>到目前为止，除了用服务器公钥加密的新对称密钥之外，所有数据都以明文形式发送。</strong>• 140 ms:最后，<strong>服务器解密出客户端发来的对称密钥</strong>，通过<strong>验证消息的 MAC 检测消息完整性，再返回给客户端一个加密的“Finished”消息</strong>。• 168 ms:客户端用它之前生成的对称密钥解密这条消息，验证 MAC，如果一切顺利，则建立信道并开始发送应用数据。</p>
+</blockquote>
+<h4 id="加密"><a href="#加密" class="headerlink" title="加密"></a>加密</h4><p> 非对称加密：只在建立TLS信道的会话中使用<br> 对称加密：建立TLS之后会一直使用<br> 主要原因是顾及性能问题<br> 以最常用的RSA、AES加密方式为例子：在安装了OpenSSL的话使用以下命令查看<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$&gt; openssl speed rsa</div><div class="line">$&gt; openssl speed aes</div></pre></td></tr></table></figure></p>
+<p>可以看出AES需要3s左右完成一次加/解密<br>可以看出RSA需要10s左右完成一次加/解密</p>
+<p><strong>TODO：后续可能会针对加解密这块写些文章，毕竟客户端在于服务端交互的时候加解密是必不可少的</strong></p>
+<h4 id="应用层协议协商（ALPN）"><a href="#应用层协议协商（ALPN）" class="headerlink" title="应用层协议协商（ALPN）"></a>应用层协议协商（ALPN）</h4><p>网络上通信可以使用自定义的协议进行通信</p>
+<ul>
+<li>HTTP的话可以使用Upgrade机制 + 80端口来协商自定义协议</li>
+<li>HTTPS的话由于使用了TLS，除了可以使用HTTP的Upgrade机制来协商，还可以使用ALPN+443端口，在TLS握手时就把协商确定协议</li>
+</ul>
+<p><strong>ALPN</strong>：在客户端发送ClientHello的过程中增加一个新的字段ProtocolNameList，告诉服务端自己支持的应用协议；<br>服务器检查ProtocolNameList字段，如果支持：在ServerHello消息中以 ProtocolName字段返回选中的协议；如果不支持：断开连接<br>【Upgrade机制会增加一次往返的延迟：会在HTTP部分进行讲解】</p>
+<h4 id="服务器名称指示（SNI）"><a href="#服务器名称指示（SNI）" class="headerlink" title="服务器名称指示（SNI）"></a>服务器名称指示（SNI）</h4><p>网络上可以建立TCP连接的任意两端都可以建立加密TLS信道，客户端只需知道 另一端的IP地址即可建立连接并进行TLS握手。然而，如果服务器想在一个IP地址为多个站点提供服务，而每个站点都拥有自己的TLS证书，那怎么办？就要用到SNI：<br><strong>SNI</strong>：该扩展被引入TLS协议，该扩展允许客户端在握手之初就指明要连接的主机名。Web服务器可以检查SNI主机名，选择适当的证书，继续完成握手</p>
+<h3 id="TLS会话恢复"><a href="#TLS会话恢复" class="headerlink" title="TLS会话恢复"></a>TLS会话恢复</h3><p>TLS握手会带来额外的延迟和计算量，造成一定的性能损失。为了挽回某些损失，TLS提供了恢复功能，即在多个连接间共享协商后的安全密钥。</p>
+<h4 id="会话标识符（Session-Identifier）"><a href="#会话标识符（Session-Identifier）" class="headerlink" title="会话标识符（Session Identifier）"></a>会话标识符（Session Identifier）</h4><p><strong>会话标识符</strong>（RFC 5246，在SSL 2.0引入）：服务器支持创建32字节的会话标识符，用于保存一个会话ID和协商后的会话参数。<br>第一次握手时：服务器把ID信息作为“ServerHello”消息的一部分发送出去，自己把其他会话信息存储起来，客户端收到后保存会话ID信息<br>需要恢复时：将该ID包含在会话的“ClientHello”消息中， 告诉服务器自己还记着上次握手协商后的加密套件和密钥呢，从而实现重用。<br>问题：对于每天几百万连接的服务器来说，TLS连接会占用不必要的内存，于是引入会话记录单（Session Ticket）</p>
+<h4 id="会话记录单（Session-Ticket）"><a href="#会话记录单（Session-Ticket）" class="headerlink" title="会话记录单（Session Ticket）"></a>会话记录单（Session Ticket）</h4><p><strong>会话记录单</strong>（RFC 5077）：该机制不用服务器保存每个客户端的会话状态，而是将只有服务器知道的安全密钥加密过的所有会话数据交由客户端保存。<br>第一次握手时：客户端表明其支持会话记录单，则服务器可以在完整TLS握手的最后一次交换中添加一条“新会话记录单”(New Session Ticket)记录，保存对应的会话数据交给客户端，客户端将这个会话记录单保存起来<br>需要恢复时：在 ClientHello 消息中将加密过的会话记录单放在SessionTicket扩展中，服务器拿到之后拿自己的秘钥解密实现重用（这种回复称之为无状态恢复）</p>
+<p><strong>会话记录单 和 会话标识符 的区别在于是服务器还是客户端存这个会话记录</strong></p>
+<h3 id="TLS记录协议"><a href="#TLS记录协议" class="headerlink" title="TLS记录协议"></a>TLS记录协议</h3><p>所有经过采用TLS的协议的请求都必须经过记录协议，添加相应的字段，进行一定的数据处理之后才交由TCP发送出去<br>发送端步骤如下：</p>
+<ol>
+<li>记录协议接收上层应用数据</li>
+<li>接收到的应用数据被切分为块:最大为每条记录214字节，即16KB。</li>
+<li>压缩应用数据(可选)。</li>
+<li>添加 MAC(Message Authentication Code)或 HMAC。</li>
+<li>用商定的加密套件加密数据</li>
+<li>交由TCP层传输<br>接收端顺序相反：6 —&gt; 1<br>注意：<br>TLS记录协议最大为16KB。事实上可以自主选择记录大小，小记录会因为分帧而招致较大开销<br>每条记录包含5字节的首部、MAC(在 SSL 3.0、TLS 1.0、TLS 1.1 中最多 20 字节，在 TLS 1.2 中最多 32 字节)，如果使用块加密则还有填充<br>必须接收到整条记录（不是帧）才开始解密和验证。</li>
+</ol>
+<h3 id="优化建议"><a href="#优化建议" class="headerlink" title="优化建议"></a>优化建议</h3><ul>
+<li>最大限制提升TCP性能</li>
+<li>开启会话缓存：在支持的客户端中使用会话记录单，而在不支持的客户端中使用会话标识符</li>
+<li>调整TLS记录大小：记录过小会造成分帧浪费，大记录会导致延迟。最好的做法：每个TCP分组恰好封装一个TLS记录，而TLS记录大小恰好占满TCP分配的MSS(Maximum Segment Size，最大段大小)<pre><code>（一方面不要让TLS记录分成多个TCP分组，另一方面又要尽量在一条记录中多发送数据，参考数据如下：
+</code></pre></li>
+<li>IPv4 帧需要 20 字节，IPv6 需要 40 字节;</li>
+<li>TCP 帧需要 20 字节;</li>
+<li>TCP 选项需要 40 字节(时间戳、SACK 等)。<pre><code>假设常见的MTU为1500字节，则TLS记录大小在IPv4下是1420字节，在IPv6下是1400字节。为确保向前兼容，建议使用IPv6下的大小:1400字节。当然，如果MTU更小，这个值也要相应调小）
+【但应用层无法控制TLS记录大小，一般是服务器编译时的常量或标志，可以通过服务器文档来查看这个值】
+</code></pre></li>
+<li>禁用服务器的TLS压缩功能<ul>
+<li>传输级的 TLS 压缩不关心内容，可能会再次压缩已经压缩过的数据(图像、视频， 等等)。双重压缩会浪费服务器和客户端的CPU时间，而且暴露的安全漏洞也很严重，因此 请禁用TLS压缩</li>
+</ul>
+</li>
+<li>确保证书链不会超过拥塞窗口的大小，从信任链中去掉不必要的证书，减少链条层次，或者直接减小证书大小<ul>
+<li>如果证书链长度超过了 TCP 的初始拥塞窗口(图 4-11)，那我们无意 间就会让握手多了一次往返:证书长度超过拥塞窗口，从而导致服务器停下来等待 客户端的 ACK 消息</li>
+</ul>
+</li>
+<li>启用服务器的OCSP封套功能（证书方面的优化）</li>
+<li>启用服务器对SNI的支持</li>
+<li>追加HTTP严格传输安全首部（不太理解）</li>
+</ul>
+<p>（后面这两个，要想进一步了解看书吧，感觉书也没讲特别细，个人也没特别深的理解，就略过了）</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;第一部分 网络技术概览&lt;ul&gt;
+&lt;li&gt;第四章 传输层安全（TLS）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/categories/%E7%BD%91%E7%BB%9C/"/>
+    
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/tags/%E7%BD%91%E7%BB%9C/"/>
+    
+      <category term="HTTPS" scheme="http://alfredzhenyu.github.io/tags/HTTPS/"/>
+    
+      <category term="SSL/TLS" scheme="http://alfredzhenyu.github.io/tags/SSL-TLS/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>《Web性能权威指南》读书笔记（二）</title>
+    <link href="http://alfredzhenyu.github.io/2016/12/23/%E3%80%8AWeb%E6%80%A7%E8%83%BD%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/"/>
+    <id>http://alfredzhenyu.github.io/2016/12/23/《Web性能权威指南》读书笔记（二）/</id>
+    <published>2016-12-23T09:03:47.000Z</published>
+    <updated>2017-02-05T03:21:14.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录</p>
+<ul>
+<li><p>第一部分 网络技术概览</p>
+<ul>
+<li>第三章 UDP构成</li>
+</ul>
+<p>​</p>
+<a id="more"></a>
+</li>
+</ul>
+<h2 id="第三章-UDP构成"><a href="#第三章-UDP构成" class="headerlink" title="第三章 UDP构成"></a>第三章 UDP构成</h2><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><ul>
+<li>关于UDP的应用，最广为人知同时也是所有浏览器和因特网应用都赖以运作的，就是DNS(Domain Name System，域名系统)</li>
+<li>HTTP 并未规定要使用 TCP，但现实中所有 HTTP 实现(以及 构建于其上的所有服务)都使用 TCP。不过，这都是过去的事了。IETF 和 W3C 工作组共同制定了一套新 API—— WebRTC(Web Real-Time Communication，Web 实时通信)</li>
+</ul>
+<h3 id="无协议服务"><a href="#无协议服务" class="headerlink" title="无协议服务"></a>无协议服务</h3><p>为什么称之为无协议：</p>
+<ul>
+<li>不保证消息交付 不确认，不重传，无超时。<em> 不保证交付顺序 不设置包序号，不重排，不会发生队首阻塞。</em> 不跟踪连接状态 不必建立连接或重启状态机。* 不需要拥塞控制 不内置客户端或网络反馈机制。<h3 id="网络地址转换器"><a href="#网络地址转换器" class="headerlink" title="网络地址转换器"></a>网络地址转换器</h3>为了解决IPv4地址耗尽的问题，提供了临时性方案 —— IP网络地址转换器（NAT）<br>IP网络地址转换器：NAT设备维护一个表，表维护了一张本地IP到外网IP的映射表，这样IP就可以实现不同网络中的映射，从而达到映射，用于解决网络不够用的问题<h3 id="NAT穿透"><a href="#NAT穿透" class="headerlink" title="NAT穿透"></a>NAT穿透</h3></li>
+</ul>
+<h4 id="NAT设备带来的问题："><a href="#NAT设备带来的问题：" class="headerlink" title="NAT设备带来的问题："></a>NAT设备带来的问题：</h4><ul>
+<li>内部客户端不知道外网 IP 地址，只知道内网 IP 地址。NAT 负责重写每个 UDP 分组中的源端口、地址，以及 IP 分组中的源 IP 地址。 如果客户端在应用数据中以其内网 IP 地址与外网主机通信，连接必然失败</li>
+<li>任何到达 NAT 设备外网 IP 的分组还必须有一个目标端口，而且 NAT 转换表中也要有一个条目可以将其转换为内部主机的 IP 地址和端口号。如果没有这个条目(通常是从外网传数据进来)，那到达的分组就会被删除。此时的 NAT 设备就像一个分组过滤器，除非用户通过端口 转发(映射)或类似机制配置过，否则它无法确定将分组发送给哪台内部主机</li>
+</ul>
+<h4 id="STUN-Session-Traversal-Utilities-for-NAT"><a href="#STUN-Session-Traversal-Utilities-for-NAT" class="headerlink" title="STUN(Session Traversal Utilities for NAT)"></a>STUN(Session Traversal Utilities for NAT)</h4><ul>
+<li>STUN协议(RFC 5389)：可以让应用程序发现网络中的地址转换器，发现之后进一步取得为当前连接分配的外网 IP 地址和端口(图 3-5)。为此，这个协议需要一个已知的第三方 STUN 服务器支持，该服务器必须架设在公网上。</li>
+<li>应用程序首先向STUN服务器发送一个绑定请求，然后STUN会返回一个响应包含客户端在外网的IP地址+端口</li>
+<li>so：<ul>
+<li>应用程序可以获得外网 IP 和端口，并利用这些信息与对端通信; </li>
+<li>发送到 STUN 服务器的出站绑定请求将在通信要经过的 NAT 中建立路由条目， 使得到达该 IP 和端口的入站分组可以找到内网中的应用程序;</li>
+<li>STUN 协议定义了一个简单 keep-alive 探测机制，可以保证 NAT 路由条目不超时。</li>
+</ul>
+</li>
+</ul>
+<p>两台主机端需要通过 UDP 通信时，它们首先都会向各自的 STUN 服务器发送绑定请求，然后分别使用响应中的外网 IP 地址和端口号交换数据。<br>【但在实际应用中，STUN 并不能适应所有类型的 NAT 和网络配置。不仅如此，某些 情况下 UDP 还会被防火墙或其他网络设备完全屏蔽所以要考虑使用TURN】</p>
+<h4 id="TURN-Traversal-Using-Relays-around-NAT"><a href="#TURN-Traversal-Using-Relays-around-NAT" class="headerlink" title="TURN(Traversal Using Relays around NAT)"></a>TURN(Traversal Using Relays around NAT)</h4><ul>
+<li>TURN(Traversal Using Relays around NAT)协议(RFC 5766)：TURN 中的关键词当然是中继(relay)。这个协议依赖于外网中继设备(图 3-6)在 两端间传递数据</li>
+<li>两端都要向同一台 TURN 服务器发送分配请求来建立连接，然后再进行权限协商。协商完毕，两端都把数据发送到 TURN 服务器，再由 TURN 服务器转发，从而实现通信</li>
+<li>so：<ul>
+<li>这样已经不再是端对端的数据较交换</li>
+<li>运维TURN服务器的投入很大</li>
+<li>中继设备容量必须足够大</li>
+</ul>
+</li>
+</ul>
+<p>实际应用中，最好在其他直连手段都失败的情况下，再使用 TURN。</p>
+<h4 id="ICE-Interactive-Connectivity-Establishment"><a href="#ICE-Interactive-Connectivity-Establishment" class="headerlink" title="ICE(Interactive Connectivity Establishment)"></a>ICE(Interactive Connectivity Establishment)</h4><ul>
+<li>ICE(Interactive Connectivity Establishment)协议(RFC 5245)：致力在通信各端之间建立一条最有效的通道(图 3-7):能直连就直连，必要时 STUN 协商，再不行使用 TURN</li>
+</ul>
+<h3 id="UDP优化建议"><a href="#UDP优化建议" class="headerlink" title="UDP优化建议"></a>UDP优化建议</h3><ul>
+<li>应用程序必须容忍各种因特网路径条件;</li>
+<li>应用程序应该控制传输速度;</li>
+<li>应用程序应该对所有流量进行拥塞控制;</li>
+<li>应用程序应该使用与 TCP 相近的带宽;</li>
+<li>应用程序应该准备基于丢包的重发计数器;</li>
+<li>应用程序应该不发送大于路径 MTU 的数据报;</li>
+<li>应用程序应该处理数据报丢失、重复和重排;</li>
+<li>应用程序应该足够稳定以支持 2 分钟以上的交付延迟;</li>
+<li>应用程序应该支持 IPv4 UDP 校验和，必须支持 IPv6 校验和;</li>
+<li>应用程序可以在需要时使用 keep-alive(最小间隔 15 秒)。</li>
+</ul>
+<p><strong>我很高兴告诉大家:WebRTC 就是符合这些要求的框架!</strong><br>（后面有机会，可以研究下，再写文章）</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;第一部分 网络技术概览&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;第三章 UDP构成&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;​&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/categories/%E7%BD%91%E7%BB%9C/"/>
+    
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/tags/%E7%BD%91%E7%BB%9C/"/>
+    
+      <category term="TCP" scheme="http://alfredzhenyu.github.io/tags/TCP/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>《Web性能权威指南》读书笔记(一)</title>
+    <link href="http://alfredzhenyu.github.io/2016/12/23/%E3%80%8AWeb%E6%80%A7%E8%83%BD%E6%9D%83%E5%A8%81%E6%8C%87%E5%8D%97%E3%80%8B%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/"/>
+    <id>http://alfredzhenyu.github.io/2016/12/23/《Web性能权威指南》读书笔记（一）/</id>
+    <published>2016-12-23T05:03:13.000Z</published>
+    <updated>2017-02-05T03:20:31.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>目录：</p>
+<ul>
+<li>第一部分 网络技术概览<ul>
+<li>第一章 延迟与带宽</li>
+<li>第二章 TCP的构成</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h1 id="第一部分-网络技术概览"><a href="#第一部分-网络技术概览" class="headerlink" title="第一部分 网络技术概览"></a>第一部分 网络技术概览</h1><h2 id="第一章-延迟与带宽"><a href="#第一章-延迟与带宽" class="headerlink" title="第一章 延迟与带宽"></a>第一章 延迟与带宽</h2><ol>
+<li>对网络通信通信部分起决定性因素的有两方面：<ul>
+<li>延迟：分组从信息源到达目的地所需的时间</li>
+<li>带宽：逻辑或物理通信最大吞吐量</li>
+</ul>
+</li>
+<li>延迟的构成<ul>
+<li>传播延迟：消息从发送端到接收端需要的时间，是信号传播距离和速度的函数</li>
+<li>传输延迟：把消息中的所有比特转移到链路中需要的时间，是消息长度和链路速率的函数</li>
+<li>处理延迟：处理分组首部、检查位错误及确定分组目标所需的时间</li>
+<li>排队延迟：到来的分组排队等待处理的时间<br>客户端到服务器的总延迟时间为以上延迟时间的总和</li>
+</ul>
+</li>
+<li>大多数网站性能的瓶颈都是延迟，而不是带宽</li>
+<li>目标：高带宽+低延迟</li>
+</ol>
+<p>延迟对用户体验的影响:<br><img src="延时与用户体验.png" alt=""></p>
+<h2 id="第二章-TCP的构成"><a href="#第二章-TCP的构成" class="headerlink" title="第二章 TCP的构成"></a>第二章 TCP的构成</h2><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>因特网两个核心协议：</p>
+<ul>
+<li><strong>TCP</strong>： Transmission Control Protocol ——— RFC 791 </li>
+<li><strong>IP</strong>： Internet Protocol ——— RFC 793<br>【HTTP标准并未规定TCP就是唯一的传输协议，也可以通过UDP或者其他协议来发送HTTP消息】</li>
+</ul>
+<h3 id="握手"><a href="#握手" class="headerlink" title="握手"></a>握手</h3><p><strong>三次握手</strong>：三次握手的细节就不讲了，这里主要想说的是其带来的延迟，使得每创建一个新 TCP 连接都要付出很大代价。而提高TCP性能的关键，在于想办法重用连接：<br><strong>TCP 快速打开（TCP Fast Open TFO）</strong>：由于非常短的 TCP 连接在 互联网上随处可见，握手阶段已经成为影响网络总延迟的一个重要因素。为解决 这个问题，人们正在积极寻找各种方案，其中 TFO(TCP Fast Open，TCP 快速打 开)就是这样一种机制  </p>
+<blockquote>
+<p>Linux 3.7 及之后的内核已经在客户端和服务器中支持 TFO，因此成为了客户端和 服务器操作系统选型的有力候选方案。即便如此，TFO 并不能解决所有问题。 它虽然有助于减少三次握手的往返时间，但却只能在某些情况下有效</p>
+</blockquote>
+<h4 id="TODO-TFO怎么实现握手优化的…"><a href="#TODO-TFO怎么实现握手优化的…" class="headerlink" title="TODO:TFO怎么实现握手优化的…"></a>TODO:TFO怎么实现握手优化的…</h4><h3 id="拥塞预防及控制："><a href="#拥塞预防及控制：" class="headerlink" title="拥塞预防及控制："></a>拥塞预防及控制：</h3><ul>
+<li>流量控制</li>
+<li>拥塞控制</li>
+<li>拥塞预防机制</li>
+</ul>
+<h3 id="流量控制："><a href="#流量控制：" class="headerlink" title="流量控制："></a>流量控制：</h3><ul>
+<li><strong>接收窗口（rwnd）</strong>：每一方都要通告自己的接收窗口（rwnd），其中包含能够保存数据的缓冲区大小信息。每次发送的数据都不会大于这个窗口值。如果其中一端（一般为接收端）的缓冲区跟不上数据传输，那它会向发送端通告一个较小的窗口，来减少每次分组发送的数据。 假如窗口为零，则意味着必须由应用层先清空缓冲区，才能再接收剩余数据</li>
+<li><strong>窗口缩放(RFC 1323)</strong>：最初的TCP规范分配给通告窗口大小的字段是 16位的,最大值(65535字节)。结果在这个限制内经常无法获得最优性能，为解决这个问题，RFC 1323提供了“TCP 窗口缩放”(TCP Window Scaling)选项， 可以把接收窗口大小由 65 535 字节提高到 1G 字节，缩放 TCP 窗口是在三次握手期 间完成的，其中有一个值表示在将来的 ACK 中左移 16 位窗口字段的位数。</li>
+</ul>
+<blockquote>
+<p>现在 TCP 窗口缩放机制在所有主要平台上都是默认启用的。不过，中间节点和 路由器可以重写，甚至完全去掉这个选项。如果你的服务器或客户端的连接不能 完全利用现有带宽，那往往该先查一查窗口大小。在 Linux 中，可以通过如下命 令检查和启用窗口缩放选项:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$&gt; sysctl net.ipv4.tcp_window_scaling</div><div class="line">$&gt; sysctl -w net.ipv4.tcp_window_scaling=1</div></pre></td></tr></table></figure>
+</blockquote>
+<h3 id="拥塞窗口"><a href="#拥塞窗口" class="headerlink" title="拥塞窗口"></a>拥塞窗口</h3><ul>
+<li><strong>拥塞窗口（cwnd）</strong>：发送端会初始化一个拥塞窗口（cwnd），但不会通告给对方。每次发送的数据都是cwnd和rwnd的最小值。</li>
+<li><strong>慢启动</strong>：每次建立完连接之后，采用逐步增大拥塞窗口大小的方式慢慢启动，最初cwnd为一个TCP段，之后采用的是”指数增长“的方式，直到达到拥塞预防机制生效为止【因为很多HTTP连接都是短暂突发的连接，常常会出现还没到达到最大阈值就被终止的情况，因为慢启动会限制可用的吞吐量，而这对于小文件传输非常不利。】</li>
+</ul>
+<blockquote>
+<p>现在目前大多数服务器中常见的初始拥塞窗口为：4段（RFC 2581规定），为减少慢启动的时间，可以尝试把初始拥塞窗口大小增加到10段（RFC 9828规定）</p>
+</blockquote>
+<ul>
+<li><strong>慢启动重启（Slow-Start Restart SSR）</strong>：这种机制会在连接空闲一定时间后重置连接的拥塞窗口。道理很简单， 在连接空闲的同时，网络状况也可能发生了变化，为了避免拥塞，理应将拥塞窗 口重置回“安全的”默认值。</li>
+</ul>
+<blockquote>
+<p>SSR 对于那些会出现突发空闲的长周期 TCP 连接(比如 HTTP 的 keep-alive 连接)有很大的影响。因此，我们建议在服务器上禁用 SSR。在 Linux 平台，可以通过如下命令来检查和禁用 SSR:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$&gt; sysctl net.ipv4.tcp_slow_start_after_idle</div><div class="line">$&gt; sysctl -w net.ipv4.tcp_slow_start_after_idle=0</div></pre></td></tr></table></figure>
+</blockquote>
+<h3 id="拥塞预防机制"><a href="#拥塞预防机制" class="headerlink" title="拥塞预防机制"></a>拥塞预防机制</h3><ul>
+<li><p><strong>拥塞阈值(ssthresh)窗口</strong>：慢启动以保守的窗口初始化连接，随后的 每次往返都会成倍提高传输的数据量，直到超过接收端的流量控制窗口，即系统 配置的拥塞阈值(ssthresh)窗口，或者有分组丢失为止，此时拥塞预防算法介入</p>
+<p>  &emsp; <strong>AIMD(Multiplicative Decrease and Additive Increase，倍减加增) 算法</strong>：即发生丢包时，先将拥塞窗口减半，然后每次往返再缓慢地给窗口增加一 个固定的值。不过，很多时候 AIMD 算法太过保守，因此又有了新的算法。<br>  &emsp; <strong>PRR(Proportional Rate Reduction，比例降速)算法</strong>：就是 RFC 6937 规定的一个新算法， 其目标就是改进丢包后的恢复速度。改进效果如何呢?根据谷歌的测量，实现新 算法后，因丢包造成的平均连接延迟减少了 3%~10%。</p>
+<h4 id="TODO-PRR如何改进丢包的恢复速度的…"><a href="#TODO-PRR如何改进丢包的恢复速度的…" class="headerlink" title="TODO:PRR如何改进丢包的恢复速度的…"></a>TODO:PRR如何改进丢包的恢复速度的…</h4></li>
+</ul>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><ul>
+<li><strong>带宽延迟积（Bandwidth-delay product，BDP）</strong>：任意时刻处于在发送途中还未收到ACK状态的最大数据量 = 数据链路的容量（带宽） *  端到端的延迟</li>
+<li><strong>队首(HOL，Head of Line)阻塞</strong>：每个TCP分组都会带着一个唯一的序列号被发，而再对于应用层而言，所有分组必须是按顺序传送到接收端。如果TCP在接收中中途有一个分组没能到达接收端的传输层，那么后续分组必须保存在接收端的 TCP 缓冲区，等待丢失的分组重发并到达接收端，之后再一起提交到应用层，而应用层在接收端只能感受到这种整体的延迟。这种效应称为 TCP 的队首阻塞</li>
+<li><strong>抖动</strong>：由于队首阻塞造成的延迟分组造成相应的重排和重组，造成分组到达延迟无法预知。这个延迟时间的变化通常被称为抖动，也是影响应用程序性能的一个主要因素<br>【无需按序交付数据或能够处理分组丢失的应用程序，以及对延迟或抖动要求很高的应用程序，最好选择 UDP 等协议。比如语音和游戏状态通信：<br>&emsp; 音频编解码器：就算有个包丢了，只要在音频中插入一个小小的间歇，就可以继续 处理后来的包。只要间歇够小，用户就注意不到，而等待丢失的包则可能导致音 频输出产生无法预料的暂停。相对来说，后者的用户体验更糟糕。&emsp; 3D 游戏中角色更新状态也一样:收到 T 时刻的包而等待 T-1 时刻的 包通常毫无必要。理想情况下，应该可以接收所有状态更新，但为避免游戏延迟， 间歇性的丢包也是可以接受的。】</li>
+</ul>
+<h3 id="TCP优化建议："><a href="#TCP优化建议：" class="headerlink" title="TCP优化建议："></a>TCP优化建议：</h3><ol>
+<li>服务器优化：<ul>
+<li>更新置最新的内核</li>
+<li>增大TCP初始拥塞窗口</li>
+<li>禁用慢启动重启</li>
+<li>启用窗口缩放</li>
+<li>打开TCP快速打开</li>
+</ul>
+</li>
+<li>应用程序调优<ul>
+<li>重用已经建立的 TCP 连接</li>
+<li>减少下载不必要的资源</li>
+<li>通过压缩算法把要发送的比特数降到最低</li>
+<li>在不同的地区部署服务 器(比如，使用 CDN)，把数据放到接近客户端的地方</li>
+</ul>
+</li>
+</ol>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;目录：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;第一部分 网络技术概览&lt;ul&gt;
+&lt;li&gt;第一章 延迟与带宽&lt;/li&gt;
+&lt;li&gt;第二章 TCP的构成&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+    
+    </summary>
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/categories/%E7%BD%91%E7%BB%9C/"/>
+    
+    
+      <category term="网络" scheme="http://alfredzhenyu.github.io/tags/%E7%BD%91%E7%BB%9C/"/>
+    
+      <category term="TCP" scheme="http://alfredzhenyu.github.io/tags/TCP/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>资源目录整理</title>
+    <link href="http://alfredzhenyu.github.io/2016/12/22/%E8%B5%84%E6%BA%90%E7%9B%AE%E5%BD%95%E6%95%B4%E7%90%86/"/>
+    <id>http://alfredzhenyu.github.io/2016/12/22/资源目录整理/</id>
+    <published>2016-12-22T06:22:40.000Z</published>
+    <updated>2017-02-05T03:20:22.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>平时每天都会打开几十个网站没时间一一消化，就一直晾着越积越多，收藏夹也太多，一般塞进去就不会翻出来看，所以管理起来也是麻烦…<br>本篇就会把之前自己涉及的领域使用到的有用的学习网站汇总起来，分享给大家，也方便自己的学习管理：</p>
+<a id="more"></a>
+<h2 id="协议、网络相关"><a href="#协议、网络相关" class="headerlink" title="协议、网络相关"></a>协议、网络相关</h2><h3 id="学习网站"><a href="#学习网站" class="headerlink" title="学习网站"></a>学习网站</h3><ol>
+<li><a href="http://www.iprotocolsec.com/category/protocol-analyze/" target="_blank" rel="external">协议分析、网络安全</a></li>
+<li>​</li>
+<li>​</li>
+</ol>
+<h3 id="优秀博客"><a href="#优秀博客" class="headerlink" title="优秀博客"></a>优秀博客</h3><h2 id="OpenGL相关"><a href="#OpenGL相关" class="headerlink" title="OpenGL相关"></a>OpenGL相关</h2><hr>
+<h3 id="学习网站-1"><a href="#学习网站-1" class="headerlink" title="学习网站"></a>学习网站</h3><ol>
+<li><a href="https://www.zhihu.com/question/29163054" target="_blank" rel="external">通俗语言解释OpenGL中着色器，渲染管线，光栅化</a></li>
+<li>​</li>
+</ol>
+<h3 id="优秀博客-1"><a href="#优秀博客-1" class="headerlink" title="优秀博客"></a>优秀博客</h3><h2 id="iOS"><a href="#iOS" class="headerlink" title="iOS"></a>iOS</h2><hr>
+<h3 id="学习网站-2"><a href="#学习网站-2" class="headerlink" title="学习网站"></a>学习网站</h3><ol>
+<li><a href="https://opensource.apple.com" target="_blank" rel="external">Apple Open Source</a></li>
+<li><a href="https://developer.apple.com/reference/corefoundation?language=objc" target="_blank" rel="external">Core Foundation API</a></li>
+</ol>
+<h3 id="优秀博客-2"><a href="#优秀博客-2" class="headerlink" title="优秀博客"></a>优秀博客</h3><ol>
+<li><a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="external">RunLoop解析(YYKit作者的blog)</a></li>
+<li><a href="https://github.com/Draveness/iOS-Source-Code-Analyze" target="_blank" rel="external">iOS开源代码解析</a></li>
+<li><a href="http://ciechanowski.me/blog/archives/" target="_blank" rel="external">NSArray、NSDictionary底层实现</a></li>
+<li><a href="http://tech.glowing.com/cn/" target="_blank" rel="external">Glow技术博客</a></li>
+</ol>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;平时每天都会打开几十个网站没时间一一消化，就一直晾着越积越多，收藏夹也太多，一般塞进去就不会翻出来看，所以管理起来也是麻烦…&lt;br&gt;本篇就会把之前自己涉及的领域使用到的有用的学习网站汇总起来，分享给大家，也方便自己的学习管理：&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="总结" scheme="http://alfredzhenyu.github.io/categories/%E6%80%BB%E7%BB%93/"/>
+    
+    
+      <category term="总结" scheme="http://alfredzhenyu.github.io/tags/%E6%80%BB%E7%BB%93/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>第一篇博客</title>
+    <link href="http://alfredzhenyu.github.io/2016/12/21/%E7%AC%AC%E4%B8%80%E7%AF%87%E5%8D%9A%E5%AE%A2/"/>
+    <id>http://alfredzhenyu.github.io/2016/12/21/第一篇博客/</id>
+    <published>2016-12-21T06:44:34.000Z</published>
+    <updated>2017-01-17T09:21:47.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>  之前就一直想抽空搞下自己的技术博客，但是一直忙这忙那的，没时间搞，但开blog，无论对找工作也好，提升自己的能力，丰富自己的生活也罢，感觉对自己都有好处。而且最近受到各种刺激，把自己的技术沉淀下去的这种期望越来越强，于是把时间腾开把想搞已久的blog开起来…也希望自己以后能多多抽时间把自己了解到的技术，都归纳总结起来吧（虽然感觉项目一忙起来，这些都是空话…）</p>
+<p>想用之前同事说的一句话作为结尾，总结最近的生活：</p>
+<h3 id="生活除了眼前的苟且…"><a href="#生活除了眼前的苟且…" class="headerlink" title="生活除了眼前的苟且…"></a>生活除了眼前的苟且…</h3><a id="more"></a>
+<h3 id="还有远方的苟且…"><a href="#还有远方的苟且…" class="headerlink" title="还有远方的苟且…"></a>还有远方的苟且…</h3>]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;  之前就一直想抽空搞下自己的技术博客，但是一直忙这忙那的，没时间搞，但开blog，无论对找工作也好，提升自己的能力，丰富自己的生活也罢，感觉对自己都有好处。而且最近受到各种刺激，把自己的技术沉淀下去的这种期望越来越强，于是把时间腾开把想搞已久的blog开起来…也希望自己以后能多多抽时间把自己了解到的技术，都归纳总结起来吧（虽然感觉项目一忙起来，这些都是空话…）&lt;/p&gt;
+&lt;p&gt;想用之前同事说的一句话作为结尾，总结最近的生活：&lt;/p&gt;
+&lt;h3 id=&quot;生活除了眼前的苟且…&quot;&gt;&lt;a href=&quot;#生活除了眼前的苟且…&quot; class=&quot;headerlink&quot; title=&quot;生活除了眼前的苟且…&quot;&gt;&lt;/a&gt;生活除了眼前的苟且…&lt;/h3&gt;
+    
+    </summary>
+    
+      <category term="生活" scheme="http://alfredzhenyu.github.io/categories/%E7%94%9F%E6%B4%BB/"/>
+    
+    
+      <category term="生活" scheme="http://alfredzhenyu.github.io/tags/%E7%94%9F%E6%B4%BB/"/>
+    
+  </entry>
+  
+</feed>
