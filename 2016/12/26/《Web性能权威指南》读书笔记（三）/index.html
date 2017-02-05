@@ -22,7 +22,7 @@
 第四章 传输层安全（TLS）">
 <meta property="og:image" content="http://alfredzhenyu.github.io/图4.1传输层安全TLS.png">
 <meta property="og:image" content="http://alfredzhenyu.github.io/图4.2TLS握手协议.png">
-<meta property="og:updated_time" content="2017-02-05T03:17:55.000Z">
+<meta property="og:updated_time" content="2017-02-05T03:20:45.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="《Web性能权威指南》读书笔记（三）">
 <meta name="twitter:description" content="目录：
@@ -70,7 +70,7 @@
 			
 				<li><a href="/">主页</a></li>
 	        
-				<li><a href="/categories/">分类</a></li>
+				<li><a href="/archives">所有文章</a></li>
 	        
 			</ul>
 		</nav>
@@ -138,7 +138,7 @@
 				
 					<li style="width: 50%"><a href="/">主页</a></li>
 		        
-					<li style="width: 50%"><a href="/categories/">分类</a></li>
+					<li style="width: 50%"><a href="/archives">所有文章</a></li>
 		        
 				</ul>
 			</nav>
@@ -218,10 +218,13 @@
 <h3 id="优化建议"><a href="#优化建议" class="headerlink" title="优化建议"></a>优化建议</h3><ul>
 <li>最大限制提升TCP性能</li>
 <li>开启会话缓存：在支持的客户端中使用会话记录单，而在不支持的客户端中使用会话标识符</li>
-<li>调整TLS记录大小：记录过小会造成分帧浪费，大记录会导致延迟。最好的做法：每个TCP分组恰好封装一个TLS记录，而TLS记录大小恰好占满TCP分配的MSS(Maximum Segment Size，最大段大小)<br>   （一方面不要让TLS记录分成多个TCP分组，另一方面又要尽量在一条记录中多发送数据，参考数据如下：</li>
+<li>调整TLS记录大小：记录过小会造成分帧浪费，大记录会导致延迟。最好的做法：每个TCP分组恰好封装一个TLS记录，而TLS记录大小恰好占满TCP分配的MSS(Maximum Segment Size，最大段大小)<pre><code>（一方面不要让TLS记录分成多个TCP分组，另一方面又要尽量在一条记录中多发送数据，参考数据如下：
+</code></pre></li>
 <li>IPv4 帧需要 20 字节，IPv6 需要 40 字节;</li>
 <li>TCP 帧需要 20 字节;</li>
-<li>TCP 选项需要 40 字节(时间戳、SACK 等)。<br>   假设常见的MTU为1500字节，则TLS记录大小在IPv4下是1420字节，在IPv6下是1400字节。为确保向前兼容，建议使用IPv6下的大小:1400字节。当然，如果MTU更小，这个值也要相应调小）<br>   【但应用层无法控制TLS记录大小，一般是服务器编译时的常量或标志，可以通过服务器文档来查看这个值】</li>
+<li>TCP 选项需要 40 字节(时间戳、SACK 等)。<pre><code>假设常见的MTU为1500字节，则TLS记录大小在IPv4下是1420字节，在IPv6下是1400字节。为确保向前兼容，建议使用IPv6下的大小:1400字节。当然，如果MTU更小，这个值也要相应调小）
+【但应用层无法控制TLS记录大小，一般是服务器编译时的常量或标志，可以通过服务器文档来查看这个值】
+</code></pre></li>
 <li>禁用服务器的TLS压缩功能<ul>
 <li>传输级的 TLS 压缩不关心内容，可能会再次压缩已经压缩过的数据(图像、视频， 等等)。双重压缩会浪费服务器和客户端的CPU时间，而且暴露的安全漏洞也很严重，因此 请禁用TLS压缩</li>
 </ul>
