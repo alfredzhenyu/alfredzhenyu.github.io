@@ -6,15 +6,27 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">
-  <title>Tags | Alfredzhenyu</title>
+  <title>Mac下用VS开发C# | Alfredzhenyu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Tags">
-<meta property="og:url" content="http://alfredzhenyu.github.io/tags/index.html">
+  <meta name="description" content="去官网下载VS，选择Mac下载
+
+跟着官网安装.net core：输入以下命令行(需要之前电脑安装过brew)
+12345$ brew update$ brew install openssl$ mkdir -p /usr/local/lib$ ln -s /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib /usr/local/lib/$ ln -">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Mac下用VS开发C#">
+<meta property="og:url" content="http://alfredzhenyu.github.io/draft/Mac下用VS开发C#.html">
 <meta property="og:site_name" content="Alfredzhenyu">
-<meta property="og:updated_time" content="2017-01-21T09:41:42.000Z">
+<meta property="og:description" content="去官网下载VS，选择Mac下载
+
+跟着官网安装.net core：输入以下命令行(需要之前电脑安装过brew)
+12345$ brew update$ brew install openssl$ mkdir -p /usr/local/lib$ ln -s /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib /usr/local/lib/$ ln -">
+<meta property="og:updated_time" content="2017-02-10T02:33:03.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Tags">
+<meta name="twitter:title" content="Mac下用VS开发C#">
+<meta name="twitter:description" content="去官网下载VS，选择Mac下载
+
+跟着官网安装.net core：输入以下命令行(需要之前电脑安装过brew)
+12345$ brew update$ brew install openssl$ mkdir -p /usr/local/lib$ ln -s /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib /usr/local/lib/$ ln -">
   
     <link rel="alternative" href="/atom.xml" title="Alfredzhenyu" type="application/atom+xml">
   
@@ -144,27 +156,54 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="tags-undefined" class="article article-type-tags " itemscope itemprop="blogPost">
+            <article id="page-undefined" class="article article-type-page " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      Tags
+      Mac下用VS开发C#
     </h1>
   
 
         
-        <a href="/tags/index.html" class="archive-article-date">
-  	<time datetime="2017-01-21T09:41:42.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-01-21</time>
+        <a href="/draft/Mac下用VS开发C#.html" class="archive-article-date">
+  	<time datetime="2017-02-07T16:28:14.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-02-08</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <ol>
+<li><p>去<a href="https://code.visualstudio.com/download" target="_blank" rel="external">官网</a>下载VS，选择Mac下载</p>
+</li>
+<li><p>跟着<a href="https://www.microsoft.com/net/core#macos" target="_blank" rel="external">官网</a>安装.net core：输入以下命令行(需要之前电脑安装过brew)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ brew update</div><div class="line">$ brew install openssl</div><div class="line">$ mkdir -p /usr/local/lib</div><div class="line">$ ln -s /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib /usr/local/lib/</div><div class="line">$ ln -s /usr/local/opt/openssl/lib/libssl.1.0.0.dylib /usr/local/lib/</div></pre></td></tr></table></figure>
+<p>下载<code>.NET Core SDK</code></p>
+<p>测试下是否安装成功：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ mkdir hwapp</div><div class="line">$ cd hwapp</div><div class="line">$ dotnet new</div><div class="line">$ dotnet restore</div><div class="line">$ dotnet run</div></pre></td></tr></table></figure>
+<p>注意：如果和我一样遇到<code>-bash: dotnet: command not found</code>一样的问题，加多条语句</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ ln -s /usr/local/share/dotnet/dotnet /usr/local/bin</div></pre></td></tr></table></figure>
+<p>​</p>
+</li>
+<li><p>运行VS，顶部菜单文件-打开选取刚刚创建的hwapp文件夹打开他会推荐C#、mono debug相关的插件</p>
+</li>
+<li><p>装aspnet：</p>
+<ul>
+<li>Dependencies:<ul>
+<li>Node.js: <code>brew install node</code> for Mac OS X, <code>choco install nodejs</code> for Windows OS</li>
+<li>Yeoman: <code>npm install -g yo</code></li>
+<li>Bower <code>npm install -g bower</code></li>
+</ul>
+</li>
+<li>Install: <code>npm install -g generator-aspnet</code></li>
+<li>Run: <code>yo aspnet</code></li>
+</ul>
+</li>
+</ol>
+
       
 
       
@@ -253,7 +292,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="http://s.jiathis.com/qrcode.php?url=http://alfredzhenyu.github.io/tags/" alt="微信分享二维码">
+      <img src="http://s.jiathis.com/qrcode.php?url=http://alfredzhenyu.github.io/draft/Mac下用VS开发C#.html" alt="微信分享二维码">
     </div>
 </div>
 
@@ -273,7 +312,7 @@
   
   <div class="duoshuo">
 	<!-- 多说评论框 start -->
-	<div class="ds-thread" data-thread-key="undefined" data-title="Tags" data-url="http://alfredzhenyu.github.io/tags/index.html"></div>
+	<div class="ds-thread" data-thread-key="undefined" data-title="Mac下用VS开发C#" data-url="http://alfredzhenyu.github.io/draft/Mac下用VS开发C#.html"></div>
 	<!-- 多说评论框 end -->
 	<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
 	<script type="text/javascript">
