@@ -5,7 +5,8 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">
+  <!--prettify代码高亮主题css引入 <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">  -->
+  <link href="/plugins/prettify/prettify.css" rel="stylesheet">
   <title>iOS开发黑科技之Xcode多Target开发 | Alfredzhenyu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="前言很多时候会出现一种情况：同一个工程文件需要生成多个相似的app
@@ -248,9 +249,11 @@
 <p><img src="GloabalFlag.png" alt=""></p>
 <p>在对应的添加宏定义</p>
 <p>把<code>_BM_SHELLSCORE_ENABLE</code>当值时，可以这样定义</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-D&apos;BM_SHELLSCORE_ENABLE=$(_BM_SHELLSCORE_ENABLE)&apos;</div></pre></td></tr></table></figure>
+<pre><code class="shell">-D&#39;BM_SHELLSCORE_ENABLE=$(_BM_SHELLSCORE_ENABLE)&#39;
+</code></pre>
 <p>把<code>_BM_SHELLSCORE_ENABLE</code>当字符串时，可以这样定义</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-D&apos;BM_SHELLSCORE_OPEN_INFO=@&quot;$(_BM_SHELLSCORE_ENABLE)&quot;&apos;</div></pre></td></tr></table></figure>
+<pre><code class="shell">-D&#39;BM_SHELLSCORE_OPEN_INFO=@&quot;$(_BM_SHELLSCORE_ENABLE)&quot;&#39;
+</code></pre>
 <p>注：</p>
 <p><code>BM_SHELLSCORE_ENABLE</code>是真真正正能代码中使用的宏</p>
 <p><code>$(_BM_SHELLSCORE_ENABLE)</code>表示取<code>_BM_SHELLSCORE_ENABLE</code>的值</p>
@@ -264,7 +267,12 @@
 <p>功能模块控制：</p>
 <p>对于功能模块的代码统一加入宏:</p>
 <p><img src="FlagCode.png" alt=""></p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">if</span> BM_SHELLSCORE_ENABLE</span></div><div class="line"><span class="comment">//code here</span></div><div class="line"><span class="meta">#<span class="meta-keyword">else</span></span></div><div class="line"><span class="comment">//code here</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div></pre></td></tr></table></figure>
+<pre><code class="c">#if BM_SHELLSCORE_ENABLE
+//code here
+#else
+//code here
+#endif
+</code></pre>
 <p>这时候，你就可以通过更改工程文件-Target里Build Setting里的User-Deifined值来控制是否开启这项功能</p>
 <h4 id="User-Defined扩展"><a href="#User-Defined扩展" class="headerlink" title="User-Defined扩展"></a>User-Defined扩展</h4><p>而对于String类型的宏更多用于在不同编译版本下设置不同的URL，因为一般来说测试环境与正式环境访问的地址，域名都不一样，那么就可以通过User-Defined里一个字段下面的Debug、Release设置不同的URL，就可以实现同一段代码访问同一个宏，实际使用的是不同值的情况</p>
 
@@ -459,7 +467,13 @@
   </div>
 </footer>
     </div>
-    <script>
+    <!--prettify代码高亮脚本引入  <script>-->
+<script src="/plugins/prettify/prettify.js"></script>
+<script type="text/javascript">
+	$(window).load(function(){
+		$('pre').addClass('prettyprint linenums').attr('style', 'overflow:auto;');
+ 		prettyPrint();
+	})
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
@@ -525,6 +539,10 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">生活</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">iOS</a>
               </li>
              
@@ -534,10 +552,6 @@
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">源码解析</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">生活</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -561,11 +575,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">总结</a>
+                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
+                <a href="javascript:void(0)" class="js-tag color3">总结</a>
               </li>
             
             <div class="clearfix"></div>

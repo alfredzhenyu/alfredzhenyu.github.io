@@ -5,7 +5,8 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">
+  <!--prettify代码高亮主题css引入 <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">  -->
+  <link href="/plugins/prettify/prettify.css" rel="stylesheet">
   <title>《Web性能权威指南》读书笔记（三） | Alfredzhenyu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="目录：
@@ -198,7 +199,10 @@
 <blockquote>
 <p><strong>到目前为止，除了用服务器公钥加密的新对称密钥之外，所有数据都以明文形式发送。</strong>• 140 ms:最后，<strong>服务器解密出客户端发来的对称密钥</strong>，通过<strong>验证消息的 MAC 检测消息完整性，再返回给客户端一个加密的“Finished”消息</strong>。• 168 ms:客户端用它之前生成的对称密钥解密这条消息，验证 MAC，如果一切顺利，则建立信道并开始发送应用数据。</p>
 </blockquote>
-<h4 id="加密"><a href="#加密" class="headerlink" title="加密"></a>加密</h4><p> 非对称加密：只在建立TLS信道的会话中使用<br> 对称加密：建立TLS之后会一直使用<br> 主要原因是顾及性能问题<br> 以最常用的RSA、AES加密方式为例子：在安装了OpenSSL的话使用以下命令查看<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$&gt; openssl speed rsa</div><div class="line">$&gt; openssl speed aes</div></pre></td></tr></table></figure></p>
+<h4 id="加密"><a href="#加密" class="headerlink" title="加密"></a>加密</h4><p> 非对称加密：只在建立TLS信道的会话中使用<br> 对称加密：建立TLS之后会一直使用<br> 主要原因是顾及性能问题<br> 以最常用的RSA、AES加密方式为例子：在安装了OpenSSL的话使用以下命令查看</p>
+<pre><code class="bash">$&gt; openssl speed rsa
+$&gt; openssl speed aes
+</code></pre>
 <p>可以看出AES需要3s左右完成一次加/解密<br>可以看出RSA需要10s左右完成一次加/解密</p>
 <p><strong>TODO：后续可能会针对加解密这块写些文章，毕竟客户端在于服务端交互的时候加解密是必不可少的</strong></p>
 <h4 id="应用层协议协商（ALPN）"><a href="#应用层协议协商（ALPN）" class="headerlink" title="应用层协议协商（ALPN）"></a>应用层协议协商（ALPN）</h4><p>网络上通信可以使用自定义的协议进行通信</p>
@@ -224,12 +228,12 @@
 <h3 id="优化建议"><a href="#优化建议" class="headerlink" title="优化建议"></a>优化建议</h3><ul>
 <li>最大限制提升TCP性能</li>
 <li>开启会话缓存：在支持的客户端中使用会话记录单，而在不支持的客户端中使用会话标识符</li>
-<li>调整TLS记录大小：记录过小会造成分帧浪费，大记录会导致延迟。最好的做法：每个TCP分组恰好封装一个TLS记录，而TLS记录大小恰好占满TCP分配的MSS(Maximum Segment Size，最大段大小)<pre><code>（一方面不要让TLS记录分成多个TCP分组，另一方面又要尽量在一条记录中多发送数据，参考数据如下：
+<li>调整TLS记录大小：记录过小会造成分帧浪费，大记录会导致延迟。最好的做法：每个TCP分组恰好封装一个TLS记录，而TLS记录大小恰好占满TCP分配的MSS(Maximum Segment Size，最大段大小)<pre><code> （一方面不要让TLS记录分成多个TCP分组，另一方面又要尽量在一条记录中多发送数据，参考数据如下：
 </code></pre></li>
 <li>IPv4 帧需要 20 字节，IPv6 需要 40 字节;</li>
 <li>TCP 帧需要 20 字节;</li>
-<li>TCP 选项需要 40 字节(时间戳、SACK 等)。<pre><code>假设常见的MTU为1500字节，则TLS记录大小在IPv4下是1420字节，在IPv6下是1400字节。为确保向前兼容，建议使用IPv6下的大小:1400字节。当然，如果MTU更小，这个值也要相应调小）
-【但应用层无法控制TLS记录大小，一般是服务器编译时的常量或标志，可以通过服务器文档来查看这个值】
+<li>TCP 选项需要 40 字节(时间戳、SACK 等)。<pre><code> 假设常见的MTU为1500字节，则TLS记录大小在IPv4下是1420字节，在IPv6下是1400字节。为确保向前兼容，建议使用IPv6下的大小:1400字节。当然，如果MTU更小，这个值也要相应调小）
+ 【但应用层无法控制TLS记录大小，一般是服务器编译时的常量或标志，可以通过服务器文档来查看这个值】
 </code></pre></li>
 <li>禁用服务器的TLS压缩功能<ul>
 <li>传输级的 TLS 压缩不关心内容，可能会再次压缩已经压缩过的数据(图像、视频， 等等)。双重压缩会浪费服务器和客户端的CPU时间，而且暴露的安全漏洞也很严重，因此 请禁用TLS压缩</li>
@@ -440,7 +444,13 @@
   </div>
 </footer>
     </div>
-    <script>
+    <!--prettify代码高亮脚本引入  <script>-->
+<script src="/plugins/prettify/prettify.js"></script>
+<script type="text/javascript">
+	$(window).load(function(){
+		$('pre').addClass('prettyprint linenums').attr('style', 'overflow:auto;');
+ 		prettyPrint();
+	})
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
@@ -506,6 +516,10 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">生活</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">iOS</a>
               </li>
              
@@ -515,10 +529,6 @@
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">源码解析</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">生活</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -542,11 +552,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">总结</a>
+                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
+                <a href="javascript:void(0)" class="js-tag color3">总结</a>
               </li>
             
             <div class="clearfix"></div>

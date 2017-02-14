@@ -5,7 +5,8 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">
+  <!--prettify代码高亮主题css引入 <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">  -->
+  <link href="/plugins/prettify/prettify.css" rel="stylesheet">
   <title>CoreFoundation源码解读之CFArray | Alfredzhenyu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="前言算是CoreFoundation源码解析的第一篇吧，之后有机会希望能做更多的源码解析，其实做这块的原因很简单，关于这块的解析还是蛮少，而作为一名iOS的开发工程师，没有比学习官方源码的方式更简单粗暴，可以从中吸取到很多内部的代码风格，与代码的技巧。
@@ -222,7 +223,59 @@
 <p><img src="方法目录.jpg" alt=""></p>
 <p>最后我会把我整理过的代码上传上去上去，有需要的可以自行下载</p>
 <h3 id="数组的声明——大致了解数组的结构"><a href="#数组的声明——大致了解数组的结构" class="headerlink" title="数组的声明——大致了解数组的结构"></a>数组的声明——大致了解数组的结构</h3><p>先来看下数组的结构体声明：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/**</span></div><div class="line"> * 所有的这些枚举值会写进一个32位的整数里，通过二进制里bits位来标识</div><div class="line"> */</div><div class="line"><span class="comment">//分别代表两种类型的数组__kCFArrayImmutable为CFArray</span></div><div class="line"><span class="comment">//分别代表两种类型的数组__kCFArrayImmutable为CFMutableArray</span></div><div class="line"><span class="comment">/* Flag bits */</span></div><div class="line"><span class="keyword">enum</span> &#123;		<span class="comment">/* Bits 0-1 */</span></div><div class="line">    __kCFArrayImmutable = <span class="number">0</span>,</div><div class="line">    __kCFArrayDeque = <span class="number">2</span>,</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">enum</span> &#123;		<span class="comment">/* Bits 2-3 */</span></div><div class="line">    __kCFArrayHasNullCallBacks = <span class="number">0</span>,</div><div class="line">    __kCFArrayHasCFTypeCallBacks = <span class="number">1</span>,</div><div class="line">    __kCFArrayHasCustomCallBacks = <span class="number">3</span>	<span class="comment">/* callbacks are at end of header */</span></div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="comment">/*</span></div><div class="line"> Bits 4 &amp; 5 are reserved for GC use.</div><div class="line"> Bit 4, if set, indicates that the array is weak.</div><div class="line"> Bit 5 marks whether finalization has occured and, thus, whether to continue to do special retain/release processing of elements.</div><div class="line"> */</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">pragma</span> mark struct</span></div><div class="line"><span class="keyword">struct</span> __CFArray &#123;</div><div class="line">    <span class="comment">/** CFRuntimeBase在CFRuntime.h中定义</span></div><div class="line">     typedef struct __CFRuntimeBase &#123;</div><div class="line">     uintptr_t _cfisa;</div><div class="line">     uint8_t _cfinfo[4];</div><div class="line">     #if __LP64__</div><div class="line">     uint32_t _rc;</div><div class="line">     #endif</div><div class="line">     &#125; CFRuntimeBase;</div><div class="line">     */</div><div class="line">    CFRuntimeBase _base;</div><div class="line">    <span class="comment">//这个是用来存数组元素数量的</span></div><div class="line">    CFIndex _count;		<span class="comment">/* number of objects */</span></div><div class="line">    CFIndex _mutations; <span class="comment">//初始化为1</span></div><div class="line">    <span class="keyword">int32_t</span> _mutInProgress; <span class="comment">//初始化为0</span></div><div class="line">    <span class="comment">//这个是用来存数组元素的,__kCFArrayDeque类型下，_store就是__CFArrayDeque</span></div><div class="line">    __strong <span class="keyword">void</span> *_store;    <span class="comment">//初始为空，Mutable加元素的时候才会创建       /* can be NULL when MutableDeque */</span></div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> __CFArrayDeque &#123;</div><div class="line">    <span class="keyword">uintptr_t</span> _leftIdx;</div><div class="line">    <span class="keyword">uintptr_t</span> _capacity;</div><div class="line">    <span class="comment">/* struct __CFArrayBucket buckets follow here */</span></div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> __CFArrayBucket &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">void</span> *_item;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<pre><code class="c">/**
+ * 所有的这些枚举值会写进一个32位的整数里，通过二进制里bits位来标识
+ */
+//分别代表两种类型的数组__kCFArrayImmutable为CFArray
+//分别代表两种类型的数组__kCFArrayImmutable为CFMutableArray
+/* Flag bits */
+enum {        /* Bits 0-1 */
+    __kCFArrayImmutable = 0,
+    __kCFArrayDeque = 2,
+};
+
+enum {        /* Bits 2-3 */
+    __kCFArrayHasNullCallBacks = 0,
+    __kCFArrayHasCFTypeCallBacks = 1,
+    __kCFArrayHasCustomCallBacks = 3    /* callbacks are at end of header */
+};
+
+/*
+ Bits 4 &amp; 5 are reserved for GC use.
+ Bit 4, if set, indicates that the array is weak.
+ Bit 5 marks whether finalization has occured and, thus, whether to continue to do special retain/release processing of elements.
+ */
+
+#pragma mark struct
+struct __CFArray {
+    /** CFRuntimeBase在CFRuntime.h中定义
+     typedef struct __CFRuntimeBase {
+     uintptr_t _cfisa;
+     uint8_t _cfinfo[4];
+     #if __LP64__
+     uint32_t _rc;
+     #endif
+     } CFRuntimeBase;
+     */
+    CFRuntimeBase _base;
+    //这个是用来存数组元素数量的
+    CFIndex _count;        /* number of objects */
+    CFIndex _mutations; //初始化为1
+    int32_t _mutInProgress; //初始化为0
+    //这个是用来存数组元素的,__kCFArrayDeque类型下，_store就是__CFArrayDeque
+    __strong void *_store;    //初始为空，Mutable加元素的时候才会创建       /* can be NULL when MutableDeque */
+};
+
+struct __CFArrayDeque {
+    uintptr_t _leftIdx;
+    uintptr_t _capacity;
+    /* struct __CFArrayBucket buckets follow here */
+};
+
+struct __CFArrayBucket {
+    const void *_item;
+};
+</code></pre>
 <p>首先数组分类两类：</p>
 <ul>
 <li>__kCFArrayImmutable不可变数组</li>
@@ -247,32 +300,351 @@
 <li>const void <em><em>item：也是一个指针，**实际上CFArray中的每个元素都对应一个\</em>_CFArrayBucket,而__CFArrayBucket里的_item指针唯一指向对应的这个元素*</em></li>
 </ul>
 <p>关于__CFArrayDeque的结构体，我会放到后面跟着源码一起来介绍。</p>
-<h3 id="数组的创建——分析不可变数组在内存中的存储方式"><a href="#数组的创建——分析不可变数组在内存中的存储方式" class="headerlink" title="数组的创建——分析不可变数组在内存中的存储方式"></a>数组的创建——分析不可变数组在内存中的存储方式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">#define DEFINE_CREATION_METHODS 1</div><div class="line">#if DEFINE_CREATION_METHODS</div><div class="line">///对外Array创建方法</div><div class="line">CFArrayRef CFArrayCreate(CFAllocatorRef allocator, const void **values, CFIndex numValues, const CFArrayCallBacks *callBacks) &#123;</div><div class="line">    return __CFArrayCreate0(allocator, values, numValues, callBacks);</div><div class="line">&#125;</div><div class="line"></div><div class="line">///对外MutableArray创建方法</div><div class="line">CFMutableArrayRef CFArrayCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFArrayCallBacks *callBacks) &#123;</div><div class="line">    return __CFArrayCreateMutable0(allocator, capacity, callBacks);</div><div class="line">&#125;</div><div class="line">#endif</div></pre></td></tr></table></figure>
+<h3 id="数组的创建——分析不可变数组在内存中的存储方式"><a href="#数组的创建——分析不可变数组在内存中的存储方式" class="headerlink" title="数组的创建——分析不可变数组在内存中的存储方式"></a>数组的创建——分析不可变数组在内存中的存储方式</h3><pre><code class="objective-c">#define DEFINE_CREATION_METHODS 1
+#if DEFINE_CREATION_METHODS
+///对外Array创建方法
+CFArrayRef CFArrayCreate(CFAllocatorRef allocator, const void **values, CFIndex numValues, const CFArrayCallBacks *callBacks) {
+    return __CFArrayCreate0(allocator, values, numValues, callBacks);
+}
+
+///对外MutableArray创建方法
+CFMutableArrayRef CFArrayCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFArrayCallBacks *callBacks) {
+    return __CFArrayCreateMutable0(allocator, capacity, callBacks);
+}
+#endif
+</code></pre>
 <p>数组对外的创建主要有两个</p>
 <ul>
 <li><code>CFArrayCreate</code> 调用<code>__CFArrayCreate0</code>方法创建</li>
 <li><code>CFArrayCreateMutable</code>调用<code>__CFArrayCreateMutable0</code>方法创建</li>
 </ul>
 <p>再来看下这两个内部方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div></pre></td><td class="code"><pre><div class="line">/** 创建一个CFArrayRef不可变数组</div><div class="line"> *  @param allocator 是使用已有的空间还是开辟新的空间来创建数组. 传 NULL 或者 kCFAllocatorDefault 使用默认的allocator</div><div class="line"> *  @param values c语言数组指针</div><div class="line"> *  @param numValues 数组个数</div><div class="line"> *  @param callBacks 一个 CFArrayCallBacks的结构指针</div><div class="line"> */</div><div class="line">//CFArrayRef 内部创建方法，调用__CFArrayInit</div><div class="line">CF_PRIVATE CFArrayRef __CFArrayCreate0(CFAllocatorRef allocator, const void **values, CFIndex numValues, const CFArrayCallBacks *callBacks) &#123;</div><div class="line">    </div><div class="line">    CFArrayRef result;</div><div class="line">    const CFArrayCallBacks *cb;</div><div class="line">    struct __CFArrayBucket *buckets;</div><div class="line">    CFAllocatorRef bucketsAllocator;</div><div class="line">    void* bucketsBase;</div><div class="line">    CFIndex idx;</div><div class="line">    </div><div class="line">    CFAssert2(0 &lt;= numValues, __kCFLogAssertion, &quot;%s(): numValues (%d) cannot be less than zero&quot;, __PRETTY_FUNCTION__, numValues);</div><div class="line">    </div><div class="line">    //__CFArrayInit初始化</div><div class="line">    result = __CFArrayInit(allocator, __kCFArrayImmutable, numValues, callBacks);</div><div class="line">    //获取callback</div><div class="line">    cb = __CFArrayGetCallBacks(result);</div><div class="line">    //每个数组元素都用一个bucket装着，通过结构体指针来索引，结构体指针顺序存储，通过指针+1来获取对应bucket指针，从而利用item索引对应的元素</div><div class="line">    buckets = __CFArrayGetBucketsPtr(result);</div><div class="line">    bucketsAllocator = isStrongMemory(result) ? allocator : kCFAllocatorNull;</div><div class="line">    bucketsBase = CF_IS_COLLECTABLE_ALLOCATOR(bucketsAllocator) ? (void *)auto_zone_base_pointer(objc_collectableZone(), buckets) : NULL;</div><div class="line">    </div><div class="line">    if (NULL != cb-&gt;retain) &#123;</div><div class="line">        </div><div class="line">        for (idx = 0; idx &lt; numValues; idx++) &#123;</div><div class="line"></div><div class="line">            /** 在CFInternal.h里定义</div><div class="line">             CF_INLINE void __CFAssignWithWriteBarrier(void **location, void *value) &#123;</div><div class="line">             if (kCFUseCollectableAllocator) &#123;</div><div class="line">             objc_assign_strongCast((id)value, (id *)location);</div><div class="line">             &#125; else &#123;</div><div class="line">             *location = value;</div><div class="line">             &#125;</div><div class="line">             &#125;</div><div class="line">             */</div><div class="line">            //__CFAssignWithWriteBarrier((void **)&amp;buckets-&gt;_item, (void *)(cb-&gt;retain)(allocator, *values));</div><div class="line">            __CFAssignWithWriteBarrier((void **)&amp;buckets-&gt;_item, (void *)INVOKE_CALLBACK2(cb-&gt;retain, allocator, *values));</div><div class="line">            </div><div class="line">            values++;</div><div class="line">            buckets++;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">    &#125; else &#123;</div><div class="line">        </div><div class="line">        for (idx = 0; idx &lt; numValues; idx++) &#123;</div><div class="line">            __CFAssignWithWriteBarrier((void **)&amp;buckets-&gt;_item, (void *)*values);</div><div class="line">            values++;</div><div class="line">            buckets++;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">    &#125;</div><div class="line">    //设置__CFArray结构体的数组大小</div><div class="line">    __CFArraySetCount(result, numValues);</div><div class="line">    return result;</div><div class="line">&#125;</div><div class="line"></div><div class="line">/** 创建一个CFMutableArrayRef可变数组</div><div class="line"> */</div><div class="line">//CFMutableArrayRef 内部创建方法（直接调用__CFArrayInit初始化即可）</div><div class="line">CF_PRIVATE CFMutableArrayRef __CFArrayCreateMutable0(CFAllocatorRef allocator, CFIndex capacity, const CFArrayCallBacks *callBacks) &#123;</div><div class="line">    //断言</div><div class="line">    CFAssert2(0 &lt;= capacity, __kCFLogAssertion, &quot;%s(): capacity (%d) cannot be less than zero&quot;, __PRETTY_FUNCTION__, capacity);</div><div class="line">    CFAssert2(capacity &lt;= LONG_MAX / sizeof(void *), __kCFLogAssertion, &quot;%s(): capacity (%d) is too large for this architecture&quot;, __PRETTY_FUNCTION__, capacity);</div><div class="line">    //__CFArrayInit初始化</div><div class="line">    return (CFMutableArrayRef)__CFArrayInit(allocator, __kCFArrayDeque, capacity, callBacks);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="objective-c">/** 创建一个CFArrayRef不可变数组
+ *  @param allocator 是使用已有的空间还是开辟新的空间来创建数组. 传 NULL 或者 kCFAllocatorDefault 使用默认的allocator
+ *  @param values c语言数组指针
+ *  @param numValues 数组个数
+ *  @param callBacks 一个 CFArrayCallBacks的结构指针
+ */
+//CFArrayRef 内部创建方法，调用__CFArrayInit
+CF_PRIVATE CFArrayRef __CFArrayCreate0(CFAllocatorRef allocator, const void **values, CFIndex numValues, const CFArrayCallBacks *callBacks) {
+
+    CFArrayRef result;
+    const CFArrayCallBacks *cb;
+    struct __CFArrayBucket *buckets;
+    CFAllocatorRef bucketsAllocator;
+    void* bucketsBase;
+    CFIndex idx;
+
+    CFAssert2(0 &lt;= numValues, __kCFLogAssertion, &quot;%s(): numValues (%d) cannot be less than zero&quot;, __PRETTY_FUNCTION__, numValues);
+
+    //__CFArrayInit初始化
+    result = __CFArrayInit(allocator, __kCFArrayImmutable, numValues, callBacks);
+    //获取callback
+    cb = __CFArrayGetCallBacks(result);
+    //每个数组元素都用一个bucket装着，通过结构体指针来索引，结构体指针顺序存储，通过指针+1来获取对应bucket指针，从而利用item索引对应的元素
+    buckets = __CFArrayGetBucketsPtr(result);
+    bucketsAllocator = isStrongMemory(result) ? allocator : kCFAllocatorNull;
+    bucketsBase = CF_IS_COLLECTABLE_ALLOCATOR(bucketsAllocator) ? (void *)auto_zone_base_pointer(objc_collectableZone(), buckets) : NULL;
+
+    if (NULL != cb-&gt;retain) {
+
+        for (idx = 0; idx &lt; numValues; idx++) {
+
+            /** 在CFInternal.h里定义
+             CF_INLINE void __CFAssignWithWriteBarrier(void **location, void *value) {
+             if (kCFUseCollectableAllocator) {
+             objc_assign_strongCast((id)value, (id *)location);
+             } else {
+             *location = value;
+             }
+             }
+             */
+            //__CFAssignWithWriteBarrier((void **)&amp;buckets-&gt;_item, (void *)(cb-&gt;retain)(allocator, *values));
+            __CFAssignWithWriteBarrier((void **)&amp;buckets-&gt;_item, (void *)INVOKE_CALLBACK2(cb-&gt;retain, allocator, *values));
+
+            values++;
+            buckets++;
+        }
+
+    } else {
+
+        for (idx = 0; idx &lt; numValues; idx++) {
+            __CFAssignWithWriteBarrier((void **)&amp;buckets-&gt;_item, (void *)*values);
+            values++;
+            buckets++;
+        }
+
+    }
+    //设置__CFArray结构体的数组大小
+    __CFArraySetCount(result, numValues);
+    return result;
+}
+
+/** 创建一个CFMutableArrayRef可变数组
+ */
+//CFMutableArrayRef 内部创建方法（直接调用__CFArrayInit初始化即可）
+CF_PRIVATE CFMutableArrayRef __CFArrayCreateMutable0(CFAllocatorRef allocator, CFIndex capacity, const CFArrayCallBacks *callBacks) {
+    //断言
+    CFAssert2(0 &lt;= capacity, __kCFLogAssertion, &quot;%s(): capacity (%d) cannot be less than zero&quot;, __PRETTY_FUNCTION__, capacity);
+    CFAssert2(capacity &lt;= LONG_MAX / sizeof(void *), __kCFLogAssertion, &quot;%s(): capacity (%d) is too large for this architecture&quot;, __PRETTY_FUNCTION__, capacity);
+    //__CFArrayInit初始化
+    return (CFMutableArrayRef)__CFArrayInit(allocator, __kCFArrayDeque, capacity, callBacks);
+}
+</code></pre>
 <p>从<code>__CFArrayCreate0</code>里对buckets的操作其实就可以推断出不可变的数组数据结构了，为了确保推断无误，我们继续看下，这两个方法都会调用基础方法<code>__CFArrayInit</code></p>
 <p>以下是<code>__CFArrayInit</code>的源码:</p>
 <p>(注释里写了一些使用到的，在别的文件中定义的相关宏，以供参考)</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div></pre></td><td class="code"><pre><div class="line">/** 初始化一个CFArrayRef数组</div><div class="line"> *  @param allocator 是使用已有的空间还是新的空间来创建数组. 传 NULL 或者 kCFAllocatorDefault 使用默认的allocator</div><div class="line"> *  @param flags 数组类型：__kCFArrayImmutable 不可变数组/__kCFArrayDeque 可变数组</div><div class="line"> *  @param capacity 数组大小</div><div class="line"> *  @param callBacks 一个 CFArrayCallBacks的结构指针</div><div class="line"> */</div><div class="line">///#if (TARGET_OS_MAC &amp;&amp; !(TARGET_OS_EMBEDDED || TARGET_OS_IPHONE))</div><div class="line">///#define CF_IS_COLLECTABLE_ALLOCATOR(allocator) (kCFUseCollectableAllocator &amp;&amp; (NULL == (allocator) || kCFAllocatorSystemDefault == (allocator) || 0))</div><div class="line">///#else 0</div><div class="line">///#endif</div><div class="line"></div><div class="line">///#define INVOKE_CALLBACK2(P, A, B) (P)(A, B)</div><div class="line">///#define __CFBitfieldGetValue(V, N1, N2)	(((V) &amp; __CFBitfieldMask(N1, N2)) &gt;&gt; (N2))</div><div class="line">///#define __CFBitfieldMask(N1, N2)	((((UInt32)~0UL) &lt;&lt; (31UL - (N1) + (N2))) &gt;&gt; (31UL - N1))</div><div class="line">///#define __CFBitfieldSetValue(V, N1, N2, X)	((V) = ((V) &amp; ~__CFBitfieldMask(N1, N2)) | (((X) &lt;&lt; (N2)) &amp; __CFBitfieldMask(N1, N2)))</div><div class="line">static CFArrayRef __CFArrayInit(CFAllocatorRef allocator, UInt32 flags, CFIndex capacity, const CFArrayCallBacks *callBacks) &#123;</div><div class="line">    </div><div class="line">    struct __CFArray *memory;</div><div class="line">    UInt32 size;</div><div class="line">    //对于Uint32位的flags，取出2~31位的数设置成0</div><div class="line">    __CFBitfieldSetValue(flags, 31, 2, 0);</div><div class="line">    </div><div class="line">    if (CF_IS_COLLECTABLE_ALLOCATOR(allocator))//ALLOCATOR = NULL 时为NO</div><div class="line">    &#123;</div><div class="line">        if (!callBacks || (callBacks-&gt;retain == NULL &amp;&amp; callBacks-&gt;release == NULL))</div><div class="line">        &#123;</div><div class="line">	    __CFBitfieldSetValue(flags, 4, 4, 1); // setWeak</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    //利用2-3位来标识callback类型</div><div class="line">    if (__CFArrayCallBacksMatchNull(callBacks)) &#123;</div><div class="line">        __CFBitfieldSetValue(flags, 3, 2, __kCFArrayHasNullCallBacks);</div><div class="line">    &#125; else if (__CFArrayCallBacksMatchCFType(callBacks)) &#123;</div><div class="line">        __CFBitfieldSetValue(flags, 3, 2, __kCFArrayHasCFTypeCallBacks);</div><div class="line">    &#125; else &#123;</div><div class="line">        __CFBitfieldSetValue(flags, 3, 2, __kCFArrayHasCustomCallBacks);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    </div><div class="line">    //size =__CFArray结构体大小+ callBack结构体大小（如果有自定义的话）- CFRuntimeBase结构体大小</div><div class="line">    size = __CFArrayGetSizeOfType(flags) - sizeof(CFRuntimeBase);</div><div class="line">    //利用0-1位来标识数组类型是__kCFArrayImmutable还是__kCFArrayDeque</div><div class="line">    //size =__CFArray结构体大小+ callBack结构体大小（如果有自定义的话）- CFRuntimeBase结构体大小 + 个数 * __CFArrayBucket结构体大小</div><div class="line">    switch (__CFBitfieldGetValue(flags, 1, 0))</div><div class="line">    &#123;</div><div class="line">    case __kCFArrayImmutable:</div><div class="line">            size += capacity * sizeof(struct __CFArrayBucket);</div><div class="line">            break;</div><div class="line">    case __kCFArrayDeque:</div><div class="line">            break;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //Runtime创建空间，注意_CFRuntimeCreateInstance需要的参数是extraBytes，需要除去CFRuntimeBase大小。 就是上面的size，事实上可以通过查看_CFRuntimeCreateInstance的源码知道CFRuntimeBase是内部创建的，外部并不需要管</div><div class="line">    memory = (struct __CFArray*)_CFRuntimeCreateInstance(allocator, CFArrayGetTypeID(), size, NULL);</div><div class="line">    if (NULL == memory) &#123;</div><div class="line">        return NULL;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //初始化CFRuntimeBase结构体参数</div><div class="line">    //把flags信息存进结构体中</div><div class="line">    __CFBitfieldSetValue(memory-&gt;_base._cfinfo[CF_INFO_BITS], 6, 0, flags);</div><div class="line">    </div><div class="line">    //初始化结构体的数组大小</div><div class="line">    __CFArraySetCount((CFArrayRef)memory, 0);</div><div class="line">    //利用0-1位来标识数组类型是__kCFArrayImmutable还是__kCFArrayDeque</div><div class="line">    switch (__CFBitfieldGetValue(flags, 1, 0))</div><div class="line">    &#123;</div><div class="line">        case __kCFArrayImmutable:</div><div class="line">            if (isWeakMemory(memory))</div><div class="line">            &#123;  // if weak, don&apos;t scan</div><div class="line">                auto_zone_set_unscanned(objc_collectableZone(), memory);</div><div class="line">            &#125;</div><div class="line">            if (__CFOASafe) __CFSetLastAllocationEventName(memory, &quot;CFArray (immutable)&quot;);</div><div class="line">            break;</div><div class="line">        case __kCFArrayDeque:</div><div class="line">            </div><div class="line">            if (__CFOASafe) __CFSetLastAllocationEventName(memory, &quot;CFArray (mutable-variable)&quot;);</div><div class="line">            </div><div class="line">            ((struct __CFArray *)memory)-&gt;_mutations = 1;</div><div class="line">            ((struct __CFArray *)memory)-&gt;_mutInProgress = 0;</div><div class="line">            ((struct __CFArray*)memory)-&gt;_store = NULL;</div><div class="line">            break;</div><div class="line">    &#125;</div><div class="line">    //设置callback</div><div class="line">    if (__kCFArrayHasCustomCallBacks == __CFBitfieldGetValue(flags, 3, 2))</div><div class="line">    &#123;</div><div class="line">        CFArrayCallBacks *cb = (CFArrayCallBacks *)__CFArrayGetCallBacks((CFArrayRef)memory);</div><div class="line">        *cb = *callBacks;</div><div class="line">        FAULT_CALLBACK((void **)&amp;(cb-&gt;retain));</div><div class="line">        FAULT_CALLBACK((void **)&amp;(cb-&gt;release));</div><div class="line">        FAULT_CALLBACK((void **)&amp;(cb-&gt;copyDescription));</div><div class="line">        FAULT_CALLBACK((void **)&amp;(cb-&gt;equal));</div><div class="line">    &#125;</div><div class="line">    return (CFArrayRef)memory;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="objective-c">/** 初始化一个CFArrayRef数组
+ *  @param allocator 是使用已有的空间还是新的空间来创建数组. 传 NULL 或者 kCFAllocatorDefault 使用默认的allocator
+ *  @param flags 数组类型：__kCFArrayImmutable 不可变数组/__kCFArrayDeque 可变数组
+ *  @param capacity 数组大小
+ *  @param callBacks 一个 CFArrayCallBacks的结构指针
+ */
+///#if (TARGET_OS_MAC &amp;&amp; !(TARGET_OS_EMBEDDED || TARGET_OS_IPHONE))
+///#define CF_IS_COLLECTABLE_ALLOCATOR(allocator) (kCFUseCollectableAllocator &amp;&amp; (NULL == (allocator) || kCFAllocatorSystemDefault == (allocator) || 0))
+///#else 0
+///#endif
+
+///#define INVOKE_CALLBACK2(P, A, B) (P)(A, B)
+///#define __CFBitfieldGetValue(V, N1, N2)    (((V) &amp; __CFBitfieldMask(N1, N2)) &gt;&gt; (N2))
+///#define __CFBitfieldMask(N1, N2)    ((((UInt32)~0UL) &lt;&lt; (31UL - (N1) + (N2))) &gt;&gt; (31UL - N1))
+///#define __CFBitfieldSetValue(V, N1, N2, X)    ((V) = ((V) &amp; ~__CFBitfieldMask(N1, N2)) | (((X) &lt;&lt; (N2)) &amp; __CFBitfieldMask(N1, N2)))
+static CFArrayRef __CFArrayInit(CFAllocatorRef allocator, UInt32 flags, CFIndex capacity, const CFArrayCallBacks *callBacks) {
+
+    struct __CFArray *memory;
+    UInt32 size;
+    //对于Uint32位的flags，取出2~31位的数设置成0
+    __CFBitfieldSetValue(flags, 31, 2, 0);
+
+    if (CF_IS_COLLECTABLE_ALLOCATOR(allocator))//ALLOCATOR = NULL 时为NO
+    {
+        if (!callBacks || (callBacks-&gt;retain == NULL &amp;&amp; callBacks-&gt;release == NULL))
+        {
+        __CFBitfieldSetValue(flags, 4, 4, 1); // setWeak
+        }
+    }
+    //利用2-3位来标识callback类型
+    if (__CFArrayCallBacksMatchNull(callBacks)) {
+        __CFBitfieldSetValue(flags, 3, 2, __kCFArrayHasNullCallBacks);
+    } else if (__CFArrayCallBacksMatchCFType(callBacks)) {
+        __CFBitfieldSetValue(flags, 3, 2, __kCFArrayHasCFTypeCallBacks);
+    } else {
+        __CFBitfieldSetValue(flags, 3, 2, __kCFArrayHasCustomCallBacks);
+    }
+
+
+    //size =__CFArray结构体大小+ callBack结构体大小（如果有自定义的话）- CFRuntimeBase结构体大小
+    size = __CFArrayGetSizeOfType(flags) - sizeof(CFRuntimeBase);
+    //利用0-1位来标识数组类型是__kCFArrayImmutable还是__kCFArrayDeque
+    //size =__CFArray结构体大小+ callBack结构体大小（如果有自定义的话）- CFRuntimeBase结构体大小 + 个数 * __CFArrayBucket结构体大小
+    switch (__CFBitfieldGetValue(flags, 1, 0))
+    {
+    case __kCFArrayImmutable:
+            size += capacity * sizeof(struct __CFArrayBucket);
+            break;
+    case __kCFArrayDeque:
+            break;
+    }
+
+    //Runtime创建空间，注意_CFRuntimeCreateInstance需要的参数是extraBytes，需要除去CFRuntimeBase大小。 就是上面的size，事实上可以通过查看_CFRuntimeCreateInstance的源码知道CFRuntimeBase是内部创建的，外部并不需要管
+    memory = (struct __CFArray*)_CFRuntimeCreateInstance(allocator, CFArrayGetTypeID(), size, NULL);
+    if (NULL == memory) {
+        return NULL;
+    }
+
+    //初始化CFRuntimeBase结构体参数
+    //把flags信息存进结构体中
+    __CFBitfieldSetValue(memory-&gt;_base._cfinfo[CF_INFO_BITS], 6, 0, flags);
+
+    //初始化结构体的数组大小
+    __CFArraySetCount((CFArrayRef)memory, 0);
+    //利用0-1位来标识数组类型是__kCFArrayImmutable还是__kCFArrayDeque
+    switch (__CFBitfieldGetValue(flags, 1, 0))
+    {
+        case __kCFArrayImmutable:
+            if (isWeakMemory(memory))
+            {  // if weak, don&#39;t scan
+                auto_zone_set_unscanned(objc_collectableZone(), memory);
+            }
+            if (__CFOASafe) __CFSetLastAllocationEventName(memory, &quot;CFArray (immutable)&quot;);
+            break;
+        case __kCFArrayDeque:
+
+            if (__CFOASafe) __CFSetLastAllocationEventName(memory, &quot;CFArray (mutable-variable)&quot;);
+
+            ((struct __CFArray *)memory)-&gt;_mutations = 1;
+            ((struct __CFArray *)memory)-&gt;_mutInProgress = 0;
+            ((struct __CFArray*)memory)-&gt;_store = NULL;
+            break;
+    }
+    //设置callback
+    if (__kCFArrayHasCustomCallBacks == __CFBitfieldGetValue(flags, 3, 2))
+    {
+        CFArrayCallBacks *cb = (CFArrayCallBacks *)__CFArrayGetCallBacks((CFArrayRef)memory);
+        *cb = *callBacks;
+        FAULT_CALLBACK((void **)&amp;(cb-&gt;retain));
+        FAULT_CALLBACK((void **)&amp;(cb-&gt;release));
+        FAULT_CALLBACK((void **)&amp;(cb-&gt;copyDescription));
+        FAULT_CALLBACK((void **)&amp;(cb-&gt;equal));
+    }
+    return (CFArrayRef)memory;
+}
+</code></pre>
 <p><code>__CFArrayInit</code>最主要职责是开辟对应的空间，然后设置数组的CallBacks、状态位，把状态位写进<code>_base._cfinfo[CF_INFO_BITS]</code>里。</p>
 <p>这里总结出个有用的技巧：</p>
 <p><strong>当一个对象有很多状态需要标识的时候，最好的方法不是设置多个布尔属性、枚举属性，而是直接使用一个32（或者16）位的整形数来存储所有状态，将这个整形数转换成二进制，利用不同位数代表的不同状态。</strong></p>
 <h3 id="小结——不可变数组在内存的存储方式"><a href="#小结——不可变数组在内存的存储方式" class="headerlink" title="小结——不可变数组在内存的存储方式"></a>小结——不可变数组在内存的存储方式</h3><p>从以上的代码就可以大致分析出不可变数组的数据结构，如下：</p>
 <p><img src="不可变数组.png" alt=""></p>
 <p>由于可变数组在整个创建过程中并没有对数据进行操作，接下来，我们需要进一步阅读可变数组对数据的增删改查来进一步了解可变数组的存储方式。</p>
-<h3 id="数组的增删改查——分析可变数组在内存中的存储方式"><a href="#数组的增删改查——分析可变数组在内存中的存储方式" class="headerlink" title="数组的增删改查——分析可变数组在内存中的存储方式"></a>数组的增删改查——分析可变数组在内存中的存储方式</h3><h4 id="增：为可变数组添加元素"><a href="#增：为可变数组添加元素" class="headerlink" title="增：为可变数组添加元素"></a>增：为可变数组添加元素</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">//添加</div><div class="line">#pragma mark add</div><div class="line">//在数组idx位置中插入一个元素（调用_CFArrayReplaceValues）</div><div class="line">void CFArrayInsertValueAtIndex(CFMutableArrayRef array, CFIndex idx, const void *value) &#123;</div><div class="line">    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, insertObject:(id)value atIndex:(NSUInteger)idx);</div><div class="line">    __CFGenericValidateType(array, CFArrayGetTypeID());</div><div class="line">    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);</div><div class="line">    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt;= __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);</div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    </div><div class="line">    _CFArrayReplaceValues(array, CFRangeMake(idx, 0), &amp;value, 1);</div><div class="line">&#125;</div><div class="line">//在数组的最后插入一个元素（调用_CFArrayReplaceValues）</div><div class="line">void CFArrayAppendValue(CFMutableArrayRef array, const void *value) &#123;</div><div class="line">    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, addObject:(id)value);</div><div class="line">    __CFGenericValidateType(array, CFArrayGetTypeID());</div><div class="line">    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);</div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    </div><div class="line">    _CFArrayReplaceValues(array, CFRangeMake(__CFArrayGetCount(array), 0), &amp;value, 1);</div><div class="line">&#125;</div><div class="line">//在数组的最后插入一个数组（调用CFArrayAppendValue）</div><div class="line">void CFArrayAppendArray(CFMutableArrayRef array, CFArrayRef otherArray, CFRange otherRange) &#123;</div><div class="line">    __CFArrayValidateRange(otherArray, otherRange, __PRETTY_FUNCTION__);</div><div class="line">    </div><div class="line">    // implemented abstractly, careful!</div><div class="line">    for (CFIndex idx = otherRange.location; idx &lt; otherRange.location + otherRange.length; idx++) &#123;</div><div class="line">        CFArrayAppendValue(array, CFArrayGetValueAtIndex(otherArray, idx));</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="删：为可变数组删除元素"><a href="#删：为可变数组删除元素" class="headerlink" title="删：为可变数组删除元素"></a>删：为可变数组删除元素</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">#pragma mark array delete</div><div class="line">//删除数组idx位置的元素（调用_CFArrayReplaceValues）</div><div class="line">void CFArrayRemoveValueAtIndex(CFMutableArrayRef array, CFIndex idx) &#123;</div><div class="line">    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, removeObjectAtIndex:(NSUInteger)idx);</div><div class="line">    __CFGenericValidateType(array, CFArrayGetTypeID());</div><div class="line">    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);</div><div class="line">    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt; __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);</div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    </div><div class="line">    _CFArrayReplaceValues(array, CFRangeMake(idx, 1), NULL, 0);</div><div class="line">&#125;</div><div class="line">//删除数组中所有的元素（调用_CFArrayReplaceValues）</div><div class="line">void CFArrayRemoveAllValues(CFMutableArrayRef array) &#123;</div><div class="line">    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, removeAllObjects);</div><div class="line">    __CFGenericValidateType(array, CFArrayGetTypeID());</div><div class="line">    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);</div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    BEGIN_MUTATION(array);</div><div class="line">    </div><div class="line">    __CFArrayReleaseValues(array, CFRangeMake(0, __CFArrayGetCount(array)), true);</div><div class="line">    __CFArraySetCount(array, 0);</div><div class="line">    array-&gt;_mutations++;</div><div class="line">    </div><div class="line">    END_MUTATION(array);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="改：为可变数组更改元素"><a href="#改：为可变数组更改元素" class="headerlink" title="改：为可变数组更改元素"></a>改：为可变数组更改元素</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">//修改</div><div class="line">#pragma mark modify</div><div class="line">//将第idx位置的元素修改成对应的值（调用_CFArrayReplaceValues）</div><div class="line">void CFArraySetValueAtIndex(CFMutableArrayRef array, CFIndex idx, const void *value) &#123;</div><div class="line">    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, setObject:(id)value atIndex:(NSUInteger)idx);</div><div class="line">    __CFGenericValidateType(array, CFArrayGetTypeID());</div><div class="line">    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);</div><div class="line">    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt;= __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);</div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    </div><div class="line">    if (idx == __CFArrayGetCount(array)) &#123;</div><div class="line">        _CFArrayReplaceValues(array, CFRangeMake(idx, 0), &amp;value, 1);</div><div class="line">    &#125; else &#123;</div><div class="line">        BEGIN_MUTATION(array);</div><div class="line">        const void *old_value;</div><div class="line">        const CFArrayCallBacks *cb = __CFArrayGetCallBacks(array);</div><div class="line">        CFAllocatorRef allocator = __CFGetAllocator(array);</div><div class="line">        struct __CFArrayBucket *bucket = __CFArrayGetBucketAtIndex(array, idx);</div><div class="line">        if (NULL != cb-&gt;retain &amp;&amp; !hasBeenFinalized(array)) &#123;</div><div class="line">            value = (void *)INVOKE_CALLBACK2(cb-&gt;retain, allocator, value);</div><div class="line">        &#125;</div><div class="line">        old_value = bucket-&gt;_item;</div><div class="line">        __CFAssignWithWriteBarrier((void **)&amp;bucket-&gt;_item, (void *)value); // GC: handles deque/CFStorage cases.</div><div class="line">        if (NULL != cb-&gt;release &amp;&amp; !hasBeenFinalized(array)) &#123;</div><div class="line">            INVOKE_CALLBACK2(cb-&gt;release, allocator, old_value);</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        </div><div class="line">        array-&gt;_mutations++;</div><div class="line">        END_MUTATION(array);</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line">//用新的数组代替旧数组部分元素（调用_CFArrayReplaceValues）</div><div class="line">void CFArrayReplaceValues(CFMutableArrayRef array, CFRange range, const void **newValues, CFIndex newCount) &#123;</div><div class="line">    </div><div class="line">    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, replaceObjectsInRange:NSMakeRange(range.location, range.length) withObjects:(id *)newValues count:(NSUInteger)newCount);</div><div class="line">    __CFGenericValidateType(array, CFArrayGetTypeID());</div><div class="line">    __CFArrayValidateRange(array, range, __PRETTY_FUNCTION__);</div><div class="line">    </div><div class="line">    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);</div><div class="line">    CFAssert2(0 &lt;= newCount, __kCFLogAssertion, &quot;%s(): newCount (%d) cannot be less than zero&quot;, __PRETTY_FUNCTION__, newCount);</div><div class="line">    </div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    </div><div class="line">    return _CFArrayReplaceValues(array, range, newValues, newCount);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="查：读取可变数组的元素"><a href="#查：读取可变数组的元素" class="headerlink" title="查：读取可变数组的元素"></a>查：读取可变数组的元素</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">//获取idx位置的数值（调用__CFArrayGetBucketAtIndex）</div><div class="line">const void *CFArrayGetValueAtIndex(CFArrayRef array, CFIndex idx) &#123;</div><div class="line">    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), const void *, (NSArray *)array, objectAtIndex:idx);</div><div class="line">    __CFGenericValidateType(array, CFArrayGetTypeID());</div><div class="line">    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt; __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);</div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    return __CFArrayGetBucketAtIndex(array, idx)-&gt;_item;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="数组的增删改查——分析可变数组在内存中的存储方式"><a href="#数组的增删改查——分析可变数组在内存中的存储方式" class="headerlink" title="数组的增删改查——分析可变数组在内存中的存储方式"></a>数组的增删改查——分析可变数组在内存中的存储方式</h3><h4 id="增：为可变数组添加元素"><a href="#增：为可变数组添加元素" class="headerlink" title="增：为可变数组添加元素"></a>增：为可变数组添加元素</h4><pre><code class="objective-c">//添加
+#pragma mark add
+//在数组idx位置中插入一个元素（调用_CFArrayReplaceValues）
+void CFArrayInsertValueAtIndex(CFMutableArrayRef array, CFIndex idx, const void *value) {
+    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, insertObject:(id)value atIndex:(NSUInteger)idx);
+    __CFGenericValidateType(array, CFArrayGetTypeID());
+    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);
+    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt;= __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);
+    CHECK_FOR_MUTATION(array);
+
+    _CFArrayReplaceValues(array, CFRangeMake(idx, 0), &amp;value, 1);
+}
+//在数组的最后插入一个元素（调用_CFArrayReplaceValues）
+void CFArrayAppendValue(CFMutableArrayRef array, const void *value) {
+    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, addObject:(id)value);
+    __CFGenericValidateType(array, CFArrayGetTypeID());
+    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);
+    CHECK_FOR_MUTATION(array);
+
+    _CFArrayReplaceValues(array, CFRangeMake(__CFArrayGetCount(array), 0), &amp;value, 1);
+}
+//在数组的最后插入一个数组（调用CFArrayAppendValue）
+void CFArrayAppendArray(CFMutableArrayRef array, CFArrayRef otherArray, CFRange otherRange) {
+    __CFArrayValidateRange(otherArray, otherRange, __PRETTY_FUNCTION__);
+
+    // implemented abstractly, careful!
+    for (CFIndex idx = otherRange.location; idx &lt; otherRange.location + otherRange.length; idx++) {
+        CFArrayAppendValue(array, CFArrayGetValueAtIndex(otherArray, idx));
+    }
+}
+</code></pre>
+<h4 id="删：为可变数组删除元素"><a href="#删：为可变数组删除元素" class="headerlink" title="删：为可变数组删除元素"></a>删：为可变数组删除元素</h4><pre><code class="objective-c">#pragma mark array delete
+//删除数组idx位置的元素（调用_CFArrayReplaceValues）
+void CFArrayRemoveValueAtIndex(CFMutableArrayRef array, CFIndex idx) {
+    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, removeObjectAtIndex:(NSUInteger)idx);
+    __CFGenericValidateType(array, CFArrayGetTypeID());
+    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);
+    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt; __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);
+    CHECK_FOR_MUTATION(array);
+
+    _CFArrayReplaceValues(array, CFRangeMake(idx, 1), NULL, 0);
+}
+//删除数组中所有的元素（调用_CFArrayReplaceValues）
+void CFArrayRemoveAllValues(CFMutableArrayRef array) {
+    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, removeAllObjects);
+    __CFGenericValidateType(array, CFArrayGetTypeID());
+    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);
+    CHECK_FOR_MUTATION(array);
+    BEGIN_MUTATION(array);
+
+    __CFArrayReleaseValues(array, CFRangeMake(0, __CFArrayGetCount(array)), true);
+    __CFArraySetCount(array, 0);
+    array-&gt;_mutations++;
+
+    END_MUTATION(array);
+}
+</code></pre>
+<h4 id="改：为可变数组更改元素"><a href="#改：为可变数组更改元素" class="headerlink" title="改：为可变数组更改元素"></a>改：为可变数组更改元素</h4><pre><code class="objective-c">//修改
+#pragma mark modify
+//将第idx位置的元素修改成对应的值（调用_CFArrayReplaceValues）
+void CFArraySetValueAtIndex(CFMutableArrayRef array, CFIndex idx, const void *value) {
+    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, setObject:(id)value atIndex:(NSUInteger)idx);
+    __CFGenericValidateType(array, CFArrayGetTypeID());
+    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);
+    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt;= __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);
+    CHECK_FOR_MUTATION(array);
+
+    if (idx == __CFArrayGetCount(array)) {
+        _CFArrayReplaceValues(array, CFRangeMake(idx, 0), &amp;value, 1);
+    } else {
+        BEGIN_MUTATION(array);
+        const void *old_value;
+        const CFArrayCallBacks *cb = __CFArrayGetCallBacks(array);
+        CFAllocatorRef allocator = __CFGetAllocator(array);
+        struct __CFArrayBucket *bucket = __CFArrayGetBucketAtIndex(array, idx);
+        if (NULL != cb-&gt;retain &amp;&amp; !hasBeenFinalized(array)) {
+            value = (void *)INVOKE_CALLBACK2(cb-&gt;retain, allocator, value);
+        }
+        old_value = bucket-&gt;_item;
+        __CFAssignWithWriteBarrier((void **)&amp;bucket-&gt;_item, (void *)value); // GC: handles deque/CFStorage cases.
+        if (NULL != cb-&gt;release &amp;&amp; !hasBeenFinalized(array)) {
+            INVOKE_CALLBACK2(cb-&gt;release, allocator, old_value);
+        }
+
+
+        array-&gt;_mutations++;
+        END_MUTATION(array);
+    }
+}
+//用新的数组代替旧数组部分元素（调用_CFArrayReplaceValues）
+void CFArrayReplaceValues(CFMutableArrayRef array, CFRange range, const void **newValues, CFIndex newCount) {
+
+    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), void, (NSMutableArray *)array, replaceObjectsInRange:NSMakeRange(range.location, range.length) withObjects:(id *)newValues count:(NSUInteger)newCount);
+    __CFGenericValidateType(array, CFArrayGetTypeID());
+    __CFArrayValidateRange(array, range, __PRETTY_FUNCTION__);
+
+    CFAssert1(__CFArrayGetType(array) != __kCFArrayImmutable, __kCFLogAssertion, &quot;%s(): array is immutable&quot;, __PRETTY_FUNCTION__);
+    CFAssert2(0 &lt;= newCount, __kCFLogAssertion, &quot;%s(): newCount (%d) cannot be less than zero&quot;, __PRETTY_FUNCTION__, newCount);
+
+    CHECK_FOR_MUTATION(array);
+
+    return _CFArrayReplaceValues(array, range, newValues, newCount);
+}
+</code></pre>
+<h4 id="查：读取可变数组的元素"><a href="#查：读取可变数组的元素" class="headerlink" title="查：读取可变数组的元素"></a>查：读取可变数组的元素</h4><pre><code class="objective-c">//获取idx位置的数值（调用__CFArrayGetBucketAtIndex）
+const void *CFArrayGetValueAtIndex(CFArrayRef array, CFIndex idx) {
+    CF_OBJC_FUNCDISPATCHV(CFArrayGetTypeID(), const void *, (NSArray *)array, objectAtIndex:idx);
+    __CFGenericValidateType(array, CFArrayGetTypeID());
+    CFAssert2(0 &lt;= idx &amp;&amp; idx &lt; __CFArrayGetCount(array), __kCFLogAssertion, &quot;%s(): index (%d) out of bounds&quot;, __PRETTY_FUNCTION__, idx);
+    CHECK_FOR_MUTATION(array);
+    return __CFArrayGetBucketAtIndex(array, idx)-&gt;_item;
+}
+</code></pre>
 <h4 id="分析可变数组存储方式"><a href="#分析可变数组存储方式" class="headerlink" title="分析可变数组存储方式"></a>分析可变数组存储方式</h4><p>从“增删改”三个操作里可以看出整个可变数组操作的核心方法就是：<code>_CFArrayReplaceValues</code></p>
 <p>而“查”包括“改”则涉及关于buckets的操作比如：<code>__CFArrayGetBucketAtIndex</code>、<code>__CFArrayGetBucketsPtr</code></p>
 <p>先来看下buckets相关的方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> 装载元素指针bucket的整块区域都是连续的，因为无论Immutable还是Deque都满足：第idx个指针等于第一个bucket指针+idx，只是可变数组和不可变数组的第一个bucket指针的位置不一样</div><div class="line"> */</div><div class="line">#pragma mark  bucket</div><div class="line">/* Only applies to immutable and mutable-deque-using arrays;</div><div class="line"> * Returns the bucket holding the left-most real value in the latter case. */</div><div class="line">//获取第一个元素Buckets的指针</div><div class="line">CF_INLINE struct __CFArrayBucket *__CFArrayGetBucketsPtr(CFArrayRef array) &#123;</div><div class="line">    switch (__CFArrayGetType(array)) &#123;</div><div class="line">            //每个数组元素都用一个bucket装着，通过结构体指针来索引，通过指针+1来获取对应bucket装着的元素（item）</div><div class="line">        case __kCFArrayImmutable:</div><div class="line">            //第一个元素的Bucket指针位置：array的指针 + 空数组大小</div><div class="line">            return (struct __CFArrayBucket *)( (uint8_t *)array + __CFArrayGetSizeOfType(((CFRuntimeBase *)array)-&gt;_cfinfo[CF_INFO_BITS]));</div><div class="line">        case __kCFArrayDeque: &#123;</div><div class="line">            //获取队列结构体的指针</div><div class="line">            struct __CFArrayDeque *deque = (struct __CFArrayDeque *)array-&gt;_store;</div><div class="line">            //队列结构体的指针 + 队列结构体大小 + 队列左值*bucket大小</div><div class="line">            return (struct __CFArrayBucket *)((uint8_t *)deque + sizeof(struct __CFArrayDeque) + deque-&gt;_leftIdx * sizeof(struct __CFArrayBucket));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    return NULL;</div><div class="line">&#125;</div><div class="line">/* This shouldn&apos;t be called if the array count is 0. */</div><div class="line">//获取第idx个元素Buckets的指针</div><div class="line">CF_INLINE struct __CFArrayBucket *__CFArrayGetBucketAtIndex(CFArrayRef array, CFIndex idx) &#123;</div><div class="line">    switch (__CFArrayGetType(array)) &#123;</div><div class="line">        case __kCFArrayImmutable:</div><div class="line">        case __kCFArrayDeque:</div><div class="line">            return __CFArrayGetBucketsPtr(array) + idx;</div><div class="line">    &#125;</div><div class="line">    return NULL;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="objective-c">/**
+ 装载元素指针bucket的整块区域都是连续的，因为无论Immutable还是Deque都满足：第idx个指针等于第一个bucket指针+idx，只是可变数组和不可变数组的第一个bucket指针的位置不一样
+ */
+#pragma mark  bucket
+/* Only applies to immutable and mutable-deque-using arrays;
+ * Returns the bucket holding the left-most real value in the latter case. */
+//获取第一个元素Buckets的指针
+CF_INLINE struct __CFArrayBucket *__CFArrayGetBucketsPtr(CFArrayRef array) {
+    switch (__CFArrayGetType(array)) {
+            //每个数组元素都用一个bucket装着，通过结构体指针来索引，通过指针+1来获取对应bucket装着的元素（item）
+        case __kCFArrayImmutable:
+            //第一个元素的Bucket指针位置：array的指针 + 空数组大小
+            return (struct __CFArrayBucket *)( (uint8_t *)array + __CFArrayGetSizeOfType(((CFRuntimeBase *)array)-&gt;_cfinfo[CF_INFO_BITS]));
+        case __kCFArrayDeque: {
+            //获取队列结构体的指针
+            struct __CFArrayDeque *deque = (struct __CFArrayDeque *)array-&gt;_store;
+            //队列结构体的指针 + 队列结构体大小 + 队列左值*bucket大小
+            return (struct __CFArrayBucket *)((uint8_t *)deque + sizeof(struct __CFArrayDeque) + deque-&gt;_leftIdx * sizeof(struct __CFArrayBucket));
+        }
+    }
+    return NULL;
+}
+/* This shouldn&#39;t be called if the array count is 0. */
+//获取第idx个元素Buckets的指针
+CF_INLINE struct __CFArrayBucket *__CFArrayGetBucketAtIndex(CFArrayRef array, CFIndex idx) {
+    switch (__CFArrayGetType(array)) {
+        case __kCFArrayImmutable:
+        case __kCFArrayDeque:
+            return __CFArrayGetBucketsPtr(array) + idx;
+    }
+    return NULL;
+}
+</code></pre>
 <p>重要的结论：<strong>装载元素指针bucket的整块区域都是连续的，因为无论可变还是不可变都满足：第idx个指针等于第一个bucket指针+idx，只是可变数组和不可变数组的第一个bucket指针的位置不一样</strong></p>
 <p>有用的信息有：</p>
 <ul>
@@ -281,7 +653,12 @@
 <li>可变数组并不是直接将数组跟在<code>__CFArrayDeque</code>后面的，而是偏移了<code>_leftIdx</code>位的</li>
 </ul>
 <p>最后一点比较难理解，我们回头看一下<code>__CFArrayDeque</code>这个结构体：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> __CFArrayDeque &#123;</div><div class="line">    <span class="keyword">uintptr_t</span> _leftIdx;</div><div class="line">    <span class="keyword">uintptr_t</span> _capacity;</div><div class="line">    <span class="comment">/* struct __CFArrayBucket buckets follow here */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<pre><code class="c">struct __CFArrayDeque {
+    uintptr_t _leftIdx;
+    uintptr_t _capacity;
+    /* struct __CFArrayBucket buckets follow here */
+};
+</code></pre>
 <p>这里面有两个成员：</p>
 <ul>
 <li>uintptr_t _capacity：容量</li>
@@ -289,7 +666,24 @@
 </ul>
 <p>如果说单纯标记数组元素元素的话用<code>_count</code>足够了，完全没必要加<code>_capacity</code>这个成员，加上刚刚的提的偏移了<code>_leftIdx</code>位，我们可以理解这个<strong><code>_capacity</code>是一个大于元素个数的容器，而数组元素只存在容器内的一部分</strong>。</p>
 <p>而与<code>_capacity</code>相关的主要就一个方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">enum &#123;</div><div class="line">    __CF_MAX_BUCKETS_PER_DEQUE = LONG_MAX</div><div class="line">&#125;;</div><div class="line">/**</div><div class="line"> capacity &lt; 4        =&gt; 返回4</div><div class="line"> __CF_MAX_BUCKETS_PER_DEQUE &gt; capacity &gt;= 4     =&gt; capacity-&gt;2进制，获取位数n，返回 2^n</div><div class="line"> capacity &gt;= __CF_MAX_BUCKETS_PER_DEQUE           =&gt; 返回__CF_MAX_BUCKETS_PER_DEQUE</div><div class="line"> eg：</div><div class="line"> 1~3 =&gt; 4</div><div class="line"> 4~7 =&gt; 8</div><div class="line"> 8~15 =&gt; 16</div><div class="line"> */</div><div class="line">//flsl:  return the position of the first bit set, or 0 if no bits are set in value.</div><div class="line">CF_INLINE CFIndex __CFArrayDequeRoundUpCapacity(CFIndex capacity) &#123;</div><div class="line">    if (capacity &lt; 4) return 4;</div><div class="line">    return __CFMin((1 &lt;&lt; flsl(capacity)), __CF_MAX_BUCKETS_PER_DEQUE);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="objective-c">enum {
+    __CF_MAX_BUCKETS_PER_DEQUE = LONG_MAX
+};
+/**
+ capacity &lt; 4        =&gt; 返回4
+ __CF_MAX_BUCKETS_PER_DEQUE &gt; capacity &gt;= 4     =&gt; capacity-&gt;2进制，获取位数n，返回 2^n
+ capacity &gt;= __CF_MAX_BUCKETS_PER_DEQUE           =&gt; 返回__CF_MAX_BUCKETS_PER_DEQUE
+ eg：
+ 1~3 =&gt; 4
+ 4~7 =&gt; 8
+ 8~15 =&gt; 16
+ */
+//flsl:  return the position of the first bit set, or 0 if no bits are set in value.
+CF_INLINE CFIndex __CFArrayDequeRoundUpCapacity(CFIndex capacity) {
+    if (capacity &lt; 4) return 4;
+    return __CFMin((1 &lt;&lt; flsl(capacity)), __CF_MAX_BUCKETS_PER_DEQUE);
+}
+</code></pre>
 <p>这个方法主要是根据数组的元素个数来获取这个<code>_capacity</code>大小。</p>
 <p>这里主要也是采用二进制来运算的，可能大家看起来有点困难，其实用十进制来描述就十分清楚：</p>
 <p>0-9 =&gt; 10</p>
@@ -304,14 +698,134 @@
 <p>…</p>
 <p>理解了这一点之后，其实只用理解<code>_leftIdx</code>的含义就可以分析出可变数组是怎么存的了，接下来看下<code>_CFArrayReplaceValues</code>。</p>
 <p>由于我们重点是了解如何往<code>__CFArrayDeque</code>写数据的，这里我们可以以直接对一个空数组一次性添加4个元素来操作，这时候我们发现<code>__CFArrayDeque</code>是在以下代码下被初始化的：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">if (0) &#123;</div><div class="line">&#125; else if (NULL == array-&gt;_store) &#123;</div><div class="line">	//新数组或者被清空的数组会进来</div><div class="line">	if (0) &#123;</div><div class="line">	&#125; else if (0 &lt;= futureCnt) &#123;  </div><div class="line">	    // 声明一个队列对象</div><div class="line">    	struct __CFArrayDeque *deque;</div><div class="line">    	// 根据元素总数确定容器可载元素总数</div><div class="line">    	CFIndex capacity = __CFArrayDequeRoundUpCapacity(futureCnt);</div><div class="line">    	// 根据容器分配空间大小</div><div class="line">    	CFIndex size = sizeof(struct __CFArrayDeque) + capacity * sizeof(struct __CFArrayBucket);</div><div class="line">       // 初始化deque，加进_store里</div><div class="line">       deque = (struct __CFArrayDeque *)CFAllocatorAllocate((allocator), size, isStrongMemory(array) ? __kCFAllocatorGCScannedMemory : 0);</div><div class="line">       if (__CFOASafe) __CFSetLastAllocationEventName(deque, &quot;CFArray (store-deque)&quot;);</div><div class="line">            deque-&gt;_leftIdx = (capacity - newCount) / 2;//使得添加了目标元素之后上下剩余的空间是相同的，这时候从头和尾添加少量元素时都不需要重新开辟空间</div><div class="line">       deque-&gt;_capacity = capacity;</div><div class="line">       __CFAssignWithWriteBarrier((void **)&amp;array-&gt;_store, (void *)deque);</div><div class="line">       if (CF_IS_COLLECTABLE_ALLOCATOR(allocator)) 				auto_zone_release(objc_collectableZone(), deque); // GC: now safe to unroot the array body.</div><div class="line">	&#125;        </div><div class="line">&#125; else &#123;</div><div class="line">   //...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="objective-c">if (0) {
+} else if (NULL == array-&gt;_store) {
+    //新数组或者被清空的数组会进来
+    if (0) {
+    } else if (0 &lt;= futureCnt) {  
+        // 声明一个队列对象
+        struct __CFArrayDeque *deque;
+        // 根据元素总数确定容器可载元素总数
+        CFIndex capacity = __CFArrayDequeRoundUpCapacity(futureCnt);
+        // 根据容器分配空间大小
+        CFIndex size = sizeof(struct __CFArrayDeque) + capacity * sizeof(struct __CFArrayBucket);
+       // 初始化deque，加进_store里
+       deque = (struct __CFArrayDeque *)CFAllocatorAllocate((allocator), size, isStrongMemory(array) ? __kCFAllocatorGCScannedMemory : 0);
+       if (__CFOASafe) __CFSetLastAllocationEventName(deque, &quot;CFArray (store-deque)&quot;);
+            deque-&gt;_leftIdx = (capacity - newCount) / 2;//使得添加了目标元素之后上下剩余的空间是相同的，这时候从头和尾添加少量元素时都不需要重新开辟空间
+       deque-&gt;_capacity = capacity;
+       __CFAssignWithWriteBarrier((void **)&amp;array-&gt;_store, (void *)deque);
+       if (CF_IS_COLLECTABLE_ALLOCATOR(allocator))                 auto_zone_release(objc_collectableZone(), deque); // GC: now safe to unroot the array body.
+    }        
+} else {
+   //...
+}
+</code></pre>
 <p>注释已经写的很清楚了，默认情况下数组的元素是会放在这个容器的中间的，上下都保留相等的空间。</p>
 <p>而作用呢？其实也很明显——就是方便前后元素的增删操作的</p>
 <h3 id="小结——可变数组在内存的存储方式"><a href="#小结——可变数组在内存的存储方式" class="headerlink" title="小结——可变数组在内存的存储方式"></a>小结——可变数组在内存的存储方式</h3><p>至此我们总结一下可变数组的存储方式：</p>
 <p><strong><code>__CFArray</code>结构体和不可变数组一样，根据是否有设置自定义CallBack，来判断是否在结构体后面开辟内存来存取<code>CFArrayCallBacks</code>，而真正数组元素是存在通过<code>_store</code>索引的一个<code>__CFArrayDeque</code>结构体后面的一块内存空间的，而且前后还保留了一些空位，以供元素的增删操作</strong></p>
 <p><img src="可变数组.png" alt=""></p>
 <h3 id="CFArrayReplaceValues——详细解读可变数组的操作过程"><a href="#CFArrayReplaceValues——详细解读可变数组的操作过程" class="headerlink" title="_CFArrayReplaceValues——详细解读可变数组的操作过程"></a><code>_CFArrayReplaceValues</code>——详细解读可变数组的操作过程</h3><p>直接上源码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> *  @param array:要操作的数组</div><div class="line"> *  @param range:要操作的范围：range.location表示从原数组的哪位开始操作，range.length表示原数组中需要操作的数量</div><div class="line"> *  @param newValues:操作的新数值数组</div><div class="line"> *  @param newCount:新数值的数量</div><div class="line"> */</div><div class="line">// This function does no ObjC dispatch or argument checking;</div><div class="line">// It should only be called from places where that dispatch and check has already been done, or NSCFArray</div><div class="line">void _CFArrayReplaceValues(CFMutableArrayRef array, CFRange range, const void **newValues, CFIndex newCount) &#123;</div><div class="line">    </div><div class="line">    CHECK_FOR_MUTATION(array);</div><div class="line">    BEGIN_MUTATION(array);</div><div class="line">    //cb: callback</div><div class="line">    //idx: 循环内的临时变量</div><div class="line">    //cnt: 数组变化之前的元素个数</div><div class="line">    //futureCnt: 数组变化之后的元素个数</div><div class="line">    //newv: 新值数组，纳入Allocator管理</div><div class="line">    //buffer: 256个指针元素的数组,大小为256X8=2048bit</div><div class="line">    const CFArrayCallBacks *cb;</div><div class="line">    CFIndex idx, cnt, futureCnt;</div><div class="line">    const void **newv, *buffer[256];</div><div class="line">    cnt = __CFArrayGetCount(array);</div><div class="line">    futureCnt = cnt - range.length + newCount;</div><div class="line">    CFAssert1(newCount &lt;= futureCnt, __kCFLogAssertion, &quot;%s(): internal error 1&quot;, __PRETTY_FUNCTION__);</div><div class="line">    cb = __CFArrayGetCallBacks(array);</div><div class="line">    CFAllocatorRef allocator = __CFGetAllocator(array);</div><div class="line">    </div><div class="line">    //判断是否需要retain</div><div class="line">    /* Retain new values if needed, possibly allocating a temporary buffer for them */</div><div class="line">    if (NULL != cb-&gt;retain &amp;&amp; !hasBeenFinalized(array)) &#123;</div><div class="line">        //个数小于256，就直接用个数为256的c数组，否则Allocator来管理内存</div><div class="line">        newv = (newCount &lt;= 256) ? (const void **)buffer : (const void **)CFAllocatorAllocate(kCFAllocatorSystemDefault, newCount * sizeof(void *), 0); // GC OK</div><div class="line">        if (newv != buffer &amp;&amp; __CFOASafe) __CFSetLastAllocationEventName(newv, &quot;CFArray (temp)&quot;);</div><div class="line">        for (idx = 0; idx &lt; newCount; idx++) &#123;</div><div class="line">            ///#define INVOKE_CALLBACK2(P, A, B) (P)(A, B)</div><div class="line">            newv[idx] = (void *)INVOKE_CALLBACK2(cb-&gt;retain, allocator, (void *)newValues[idx]);</div><div class="line">        &#125;</div><div class="line">    &#125; else &#123;</div><div class="line">        newv = newValues;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    array-&gt;_mutations++;</div><div class="line">    </div><div class="line">    // 将一个数组的元素区域分成了三个部分，每个部分都可能为空</div><div class="line">    // A: 从索引下标零的位置到小于 range.location 的区域</div><div class="line">    // B: 传入的 range.location 区域</div><div class="line">    // C: 从 range.location + range.length 到数组末尾</div><div class="line">    //干掉B区域数据</div><div class="line">    if (0 &lt; range.length) &#123;</div><div class="line">        __CFArrayReleaseValues(array, range, false);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    if (0) &#123;</div><div class="line">    &#125; else if (NULL == array-&gt;_store) &#123;</div><div class="line">        //新数组或者被清空的数组会进来</div><div class="line">        if (0) &#123;</div><div class="line">        &#125; else if (0 &lt;= futureCnt) &#123;</div><div class="line">            </div><div class="line">            // 声明一个队列对象</div><div class="line">            struct __CFArrayDeque *deque;</div><div class="line">            // 根据元素总数确定容器可载元素总数</div><div class="line">            CFIndex capacity = __CFArrayDequeRoundUpCapacity(futureCnt);</div><div class="line">            // 根据容器分配空间大小</div><div class="line">            CFIndex size = sizeof(struct __CFArrayDeque) + capacity * sizeof(struct __CFArrayBucket);</div><div class="line">            // 初始化deque，加进_store里</div><div class="line">            deque = (struct __CFArrayDeque *)CFAllocatorAllocate((allocator), size, isStrongMemory(array) ? __kCFAllocatorGCScannedMemory : 0);</div><div class="line">            if (__CFOASafe) __CFSetLastAllocationEventName(deque, &quot;CFArray (store-deque)&quot;);</div><div class="line">            deque-&gt;_leftIdx = (capacity - newCount) / 2;//原因：使得添加了目标元素之后上下剩余的空间是相同的，这时候从头和尾添加少量元素时都不需要重新开辟空间</div><div class="line">            deque-&gt;_capacity = capacity;</div><div class="line">            __CFAssignWithWriteBarrier((void **)&amp;array-&gt;_store, (void *)deque);</div><div class="line">            if (CF_IS_COLLECTABLE_ALLOCATOR(allocator)) auto_zone_release(objc_collectableZone(), deque); // GC: now safe to unroot the array body.</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">    &#125; else &#123;		// Deque</div><div class="line">        //deque已经创建出来，元素个数不为空</div><div class="line">        if (0) &#123;</div><div class="line">        &#125; else if (range.length != newCount) &#123;</div><div class="line">            //根据B区域元素个数，挪动A、C区域</div><div class="line">            __CFArrayRepositionDequeRegions(array, range, newCount);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    //以上操作只是开辟新空间，实际上并没有把新的元素弄进数组里，下面把元素移进数组里</div><div class="line">    // copy in new region B elements</div><div class="line">    if (0 &lt; newCount) &#123;</div><div class="line">        if (0) &#123;</div><div class="line">        &#125; else &#123;	// Deque</div><div class="line">            struct __CFArrayDeque *deque = (struct __CFArrayDeque *)array-&gt;_store;</div><div class="line">            struct __CFArrayBucket *raw_buckets = (struct __CFArrayBucket *)((uint8_t *)deque + sizeof(struct __CFArrayDeque));</div><div class="line">            ///TODO：objc_memmove_collectable???</div><div class="line">            objc_memmove_collectable(raw_buckets + deque-&gt;_leftIdx + range.location, newv, newCount * sizeof(struct __CFArrayBucket));</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">    __CFArraySetCount(array, futureCnt);</div><div class="line">    if (newv != buffer &amp;&amp; newv != newValues) CFAllocatorDeallocate(kCFAllocatorSystemDefault, newv);</div><div class="line">    END_MUTATION(array);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="objective-c">/**
+ *  @param array:要操作的数组
+ *  @param range:要操作的范围：range.location表示从原数组的哪位开始操作，range.length表示原数组中需要操作的数量
+ *  @param newValues:操作的新数值数组
+ *  @param newCount:新数值的数量
+ */
+// This function does no ObjC dispatch or argument checking;
+// It should only be called from places where that dispatch and check has already been done, or NSCFArray
+void _CFArrayReplaceValues(CFMutableArrayRef array, CFRange range, const void **newValues, CFIndex newCount) {
+
+    CHECK_FOR_MUTATION(array);
+    BEGIN_MUTATION(array);
+    //cb: callback
+    //idx: 循环内的临时变量
+    //cnt: 数组变化之前的元素个数
+    //futureCnt: 数组变化之后的元素个数
+    //newv: 新值数组，纳入Allocator管理
+    //buffer: 256个指针元素的数组,大小为256X8=2048bit
+    const CFArrayCallBacks *cb;
+    CFIndex idx, cnt, futureCnt;
+    const void **newv, *buffer[256];
+    cnt = __CFArrayGetCount(array);
+    futureCnt = cnt - range.length + newCount;
+    CFAssert1(newCount &lt;= futureCnt, __kCFLogAssertion, &quot;%s(): internal error 1&quot;, __PRETTY_FUNCTION__);
+    cb = __CFArrayGetCallBacks(array);
+    CFAllocatorRef allocator = __CFGetAllocator(array);
+
+    //判断是否需要retain
+    /* Retain new values if needed, possibly allocating a temporary buffer for them */
+    if (NULL != cb-&gt;retain &amp;&amp; !hasBeenFinalized(array)) {
+        //个数小于256，就直接用个数为256的c数组，否则Allocator来管理内存
+        newv = (newCount &lt;= 256) ? (const void **)buffer : (const void **)CFAllocatorAllocate(kCFAllocatorSystemDefault, newCount * sizeof(void *), 0); // GC OK
+        if (newv != buffer &amp;&amp; __CFOASafe) __CFSetLastAllocationEventName(newv, &quot;CFArray (temp)&quot;);
+        for (idx = 0; idx &lt; newCount; idx++) {
+            ///#define INVOKE_CALLBACK2(P, A, B) (P)(A, B)
+            newv[idx] = (void *)INVOKE_CALLBACK2(cb-&gt;retain, allocator, (void *)newValues[idx]);
+        }
+    } else {
+        newv = newValues;
+    }
+
+    array-&gt;_mutations++;
+
+    // 将一个数组的元素区域分成了三个部分，每个部分都可能为空
+    // A: 从索引下标零的位置到小于 range.location 的区域
+    // B: 传入的 range.location 区域
+    // C: 从 range.location + range.length 到数组末尾
+    //干掉B区域数据
+    if (0 &lt; range.length) {
+        __CFArrayReleaseValues(array, range, false);
+    }
+
+    if (0) {
+    } else if (NULL == array-&gt;_store) {
+        //新数组或者被清空的数组会进来
+        if (0) {
+        } else if (0 &lt;= futureCnt) {
+
+            // 声明一个队列对象
+            struct __CFArrayDeque *deque;
+            // 根据元素总数确定容器可载元素总数
+            CFIndex capacity = __CFArrayDequeRoundUpCapacity(futureCnt);
+            // 根据容器分配空间大小
+            CFIndex size = sizeof(struct __CFArrayDeque) + capacity * sizeof(struct __CFArrayBucket);
+            // 初始化deque，加进_store里
+            deque = (struct __CFArrayDeque *)CFAllocatorAllocate((allocator), size, isStrongMemory(array) ? __kCFAllocatorGCScannedMemory : 0);
+            if (__CFOASafe) __CFSetLastAllocationEventName(deque, &quot;CFArray (store-deque)&quot;);
+            deque-&gt;_leftIdx = (capacity - newCount) / 2;//原因：使得添加了目标元素之后上下剩余的空间是相同的，这时候从头和尾添加少量元素时都不需要重新开辟空间
+            deque-&gt;_capacity = capacity;
+            __CFAssignWithWriteBarrier((void **)&amp;array-&gt;_store, (void *)deque);
+            if (CF_IS_COLLECTABLE_ALLOCATOR(allocator)) auto_zone_release(objc_collectableZone(), deque); // GC: now safe to unroot the array body.
+        }
+
+    } else {        // Deque
+        //deque已经创建出来，元素个数不为空
+        if (0) {
+        } else if (range.length != newCount) {
+            //根据B区域元素个数，挪动A、C区域
+            __CFArrayRepositionDequeRegions(array, range, newCount);
+        }
+    }
+
+    //以上操作只是开辟新空间，实际上并没有把新的元素弄进数组里，下面把元素移进数组里
+    // copy in new region B elements
+    if (0 &lt; newCount) {
+        if (0) {
+        } else {    // Deque
+            struct __CFArrayDeque *deque = (struct __CFArrayDeque *)array-&gt;_store;
+            struct __CFArrayBucket *raw_buckets = (struct __CFArrayBucket *)((uint8_t *)deque + sizeof(struct __CFArrayDeque));
+            ///TODO：objc_memmove_collectable???
+            objc_memmove_collectable(raw_buckets + deque-&gt;_leftIdx + range.location, newv, newCount * sizeof(struct __CFArrayBucket));
+        }
+    }
+
+    __CFArraySetCount(array, futureCnt);
+    if (newv != buffer &amp;&amp; newv != newValues) CFAllocatorDeallocate(kCFAllocatorSystemDefault, newv);
+    END_MUTATION(array);
+}
+</code></pre>
 <p>代码量很大，这里简单介绍一下整个Replace的步骤</p>
 <ol>
 <li>对newValues进行retain处理</li>
@@ -320,7 +834,107 @@
 <li>把新增元素添加到对应的deque的位置</li>
 </ol>
 <p>其中1、2、4步骤都直接展示出来的，而且也没有什么理解上的困难，我们重点看下第3步，第三步是通过<code>__CFArrayRepositionDequeRegions</code>实现的，这也是理解整个数组元素操作的重要一步：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">// may move deque storage, as it may need to grow deque</div><div class="line">static void __CFArrayRepositionDequeRegions(CFMutableArrayRef array, CFRange range, CFIndex newCount) &#123;</div><div class="line">    // newCount elements are going to replace the range, and the result will fit in the deque</div><div class="line">    struct __CFArrayDeque *deque = (struct __CFArrayDeque *)array-&gt;_store;</div><div class="line">    struct __CFArrayBucket *buckets;</div><div class="line">    CFIndex cnt, futureCnt, numNewElems;</div><div class="line">    CFIndex L, A, B, C, R;</div><div class="line">    </div><div class="line">    buckets = (struct __CFArrayBucket *)((uint8_t *)deque + sizeof(struct __CFArrayDeque));</div><div class="line">    cnt = __CFArrayGetCount(array);</div><div class="line">    futureCnt = cnt - range.length + newCount;</div><div class="line">    </div><div class="line">    L = deque-&gt;_leftIdx;		// length of region to left of deque</div><div class="line">    A = range.location;			// length of region in deque to left of replaced range</div><div class="line">    B = range.length;			// length of replaced range</div><div class="line">    C = cnt - B - A;			// length of region in deque to right of replaced range</div><div class="line">    R = deque-&gt;_capacity - cnt - L;	// length of region to right of deque</div><div class="line">    numNewElems = newCount - B;</div><div class="line">    </div><div class="line">    // deque-&gt;_capacity一般情况下都是2^n这里是让n-17,</div><div class="line">    CFIndex wiggle = deque-&gt;_capacity &gt;&gt; 17;</div><div class="line">    // so: 二进制位数小于20位或者十进制小于131072，wiggle = 4， 否则 wiggle = 2^(n-17)</div><div class="line">    if (wiggle &lt; 4) wiggle = 4;</div><div class="line">    if (deque-&gt;_capacity &lt; (uint32_t)futureCnt || (cnt &lt; futureCnt &amp;&amp; L + R &lt; wiggle)) &#123;</div><div class="line">        //此时一定要开辟新的空间，大于可抖动范围，不能通过挪动数据完成操作</div><div class="line">        /**</div><div class="line">         * 开辟新的一整块的连续空间（包括deque结构体），计算新的数据块（A、C）在新空间的位置，memove移植过去，</div><div class="line">         */</div><div class="line">        // must be inserting or space is tight, reallocate and re-center everything</div><div class="line">        CFIndex capacity = __CFArrayDequeRoundUpCapacity(futureCnt + wiggle);</div><div class="line">        CFIndex size = sizeof(struct __CFArrayDeque) + capacity * sizeof(struct __CFArrayBucket);</div><div class="line">        CFAllocatorRef allocator = __CFGetAllocator(array);</div><div class="line">        Boolean collectableMemory = CF_IS_COLLECTABLE_ALLOCATOR(allocator);</div><div class="line">        </div><div class="line">        struct __CFArrayDeque *newDeque = (struct __CFArrayDeque *)CFAllocatorAllocate(allocator, size, isStrongMemory(array) ? __kCFAllocatorGCScannedMemory : 0);</div><div class="line">        if (__CFOASafe) __CFSetLastAllocationEventName(newDeque, &quot;CFArray (store-deque)&quot;);</div><div class="line">        struct __CFArrayBucket *newBuckets = (struct __CFArrayBucket *)((uint8_t *)newDeque + sizeof(struct __CFArrayDeque));</div><div class="line">        </div><div class="line">        CFIndex oldL = L;</div><div class="line">        CFIndex newL = (capacity - futureCnt) / 2;</div><div class="line">        CFIndex oldC0 = oldL + A + B;</div><div class="line">        CFIndex newC0 = newL + A + newCount;</div><div class="line">        newDeque-&gt;_leftIdx = newL;</div><div class="line">        newDeque-&gt;_capacity = capacity;</div><div class="line">        if (0 &lt; A) objc_memmove_collectable(newBuckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));</div><div class="line">        if (0 &lt; C) objc_memmove_collectable(newBuckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));</div><div class="line">        __CFAssignWithWriteBarrier((void **)&amp;array-&gt;_store, (void *)newDeque);</div><div class="line">        if (!collectableMemory &amp;&amp; deque) CFAllocatorDeallocate(allocator, deque);</div><div class="line">        if (CF_IS_COLLECTABLE_ALLOCATOR(allocator)) auto_zone_release(objc_collectableZone(), newDeque);</div><div class="line">        //printf(&quot;3:  array %p store is now %p (%lx)\n&quot;, array, array-&gt;_store, *(unsigned long *)(array-&gt;_store));</div><div class="line">        return;</div><div class="line">    &#125;</div><div class="line">    /**</div><div class="line">     *  numNewElems &lt; 0 说明数据变少了，看是A小还是C小，memmove两者小的那块区域即可</div><div class="line">     *  numNewElems &gt; 0 说明数据变多了，如果A &gt; C 且 C下面的R区域够大就memmove C区域即可， C &lt; A 且上面的L区域够大就memmove A区域即可</div><div class="line">     *  numNewElems &gt; 0 且不符合上述规则， 需要根据具体情况同时移动A、C区域</div><div class="line">     */</div><div class="line">    </div><div class="line">    if ((numNewElems &lt; 0 &amp;&amp; C &lt; A) || (numNewElems &lt;= R &amp;&amp; C &lt; A)) &#123;	// move C</div><div class="line">        // deleting: C is smaller</div><div class="line">        // inserting: C is smaller and R has room</div><div class="line">        CFIndex oldC0 = L + A + B;</div><div class="line">        CFIndex newC0 = L + A + newCount;</div><div class="line">        if (0 &lt; C) objc_memmove_collectable(buckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));</div><div class="line">        // GrP GC: zero-out newly exposed space on the right, if any</div><div class="line">        if (oldC0 &gt; newC0) memset(buckets + newC0 + C, 0, (oldC0 - newC0) * sizeof(struct __CFArrayBucket));</div><div class="line">    &#125; else if ((numNewElems &lt; 0) || (numNewElems &lt;= L &amp;&amp; A &lt;= C)) &#123;	// move A</div><div class="line">        // deleting: A is smaller or equal (covers remaining delete cases)</div><div class="line">        // inserting: A is smaller and L has room</div><div class="line">        CFIndex oldL = L;</div><div class="line">        CFIndex newL = L - numNewElems;</div><div class="line">        deque-&gt;_leftIdx = newL;</div><div class="line">        if (0 &lt; A) objc_memmove_collectable(buckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));</div><div class="line">        // GrP GC: zero-out newly exposed space on the left, if any</div><div class="line">        if (newL &gt; oldL) memset(buckets + oldL, 0, (newL - oldL) * sizeof(struct __CFArrayBucket));</div><div class="line">    &#125; else &#123;</div><div class="line">        // now, must be inserting, and either:</div><div class="line">        //    A&lt;=C, but L doesn&apos;t have room (R might have, but don&apos;t care)</div><div class="line">        //    C&lt;A, but R doesn&apos;t have room (L might have, but don&apos;t care)</div><div class="line">        // re-center everything</div><div class="line">        CFIndex oldL = L;</div><div class="line">        CFIndex newL = (L + R - numNewElems) / 2;</div><div class="line">        newL = newL - newL / 2;</div><div class="line">        CFIndex oldC0 = oldL + A + B;</div><div class="line">        CFIndex newC0 = newL + A + newCount;</div><div class="line">        deque-&gt;_leftIdx = newL;</div><div class="line">        if (newL &lt; oldL) &#123;</div><div class="line">            if (0 &lt; A) objc_memmove_collectable(buckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));</div><div class="line">            if (0 &lt; C) objc_memmove_collectable(buckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));</div><div class="line">            // GrP GC: zero-out newly exposed space on the right, if any</div><div class="line">            if (oldC0 &gt; newC0) memset(buckets + newC0 + C, 0, (oldC0 - newC0) * sizeof(struct __CFArrayBucket));</div><div class="line">        &#125; else &#123;</div><div class="line">            if (0 &lt; C) objc_memmove_collectable(buckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));</div><div class="line">            if (0 &lt; A) objc_memmove_collectable(buckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));</div><div class="line">            // GrP GC: zero-out newly exposed space on the left, if any</div><div class="line">            if (newL &gt; oldL) memset(buckets + oldL, 0, (newL - oldL) * sizeof(struct __CFArrayBucket));</div><div class="line">        &#125;</div><div class="line">    &#125;   </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="objective-c">
+// may move deque storage, as it may need to grow deque
+static void __CFArrayRepositionDequeRegions(CFMutableArrayRef array, CFRange range, CFIndex newCount) {
+    // newCount elements are going to replace the range, and the result will fit in the deque
+    struct __CFArrayDeque *deque = (struct __CFArrayDeque *)array-&gt;_store;
+    struct __CFArrayBucket *buckets;
+    CFIndex cnt, futureCnt, numNewElems;
+    CFIndex L, A, B, C, R;
+
+    buckets = (struct __CFArrayBucket *)((uint8_t *)deque + sizeof(struct __CFArrayDeque));
+    cnt = __CFArrayGetCount(array);
+    futureCnt = cnt - range.length + newCount;
+
+    L = deque-&gt;_leftIdx;        // length of region to left of deque
+    A = range.location;            // length of region in deque to left of replaced range
+    B = range.length;            // length of replaced range
+    C = cnt - B - A;            // length of region in deque to right of replaced range
+    R = deque-&gt;_capacity - cnt - L;    // length of region to right of deque
+    numNewElems = newCount - B;
+
+    // deque-&gt;_capacity一般情况下都是2^n这里是让n-17,
+    CFIndex wiggle = deque-&gt;_capacity &gt;&gt; 17;
+    // so: 二进制位数小于20位或者十进制小于131072，wiggle = 4， 否则 wiggle = 2^(n-17)
+    if (wiggle &lt; 4) wiggle = 4;
+    if (deque-&gt;_capacity &lt; (uint32_t)futureCnt || (cnt &lt; futureCnt &amp;&amp; L + R &lt; wiggle)) {
+        //此时一定要开辟新的空间，大于可抖动范围，不能通过挪动数据完成操作
+        /**
+         * 开辟新的一整块的连续空间（包括deque结构体），计算新的数据块（A、C）在新空间的位置，memove移植过去，
+         */
+        // must be inserting or space is tight, reallocate and re-center everything
+        CFIndex capacity = __CFArrayDequeRoundUpCapacity(futureCnt + wiggle);
+        CFIndex size = sizeof(struct __CFArrayDeque) + capacity * sizeof(struct __CFArrayBucket);
+        CFAllocatorRef allocator = __CFGetAllocator(array);
+        Boolean collectableMemory = CF_IS_COLLECTABLE_ALLOCATOR(allocator);
+
+        struct __CFArrayDeque *newDeque = (struct __CFArrayDeque *)CFAllocatorAllocate(allocator, size, isStrongMemory(array) ? __kCFAllocatorGCScannedMemory : 0);
+        if (__CFOASafe) __CFSetLastAllocationEventName(newDeque, &quot;CFArray (store-deque)&quot;);
+        struct __CFArrayBucket *newBuckets = (struct __CFArrayBucket *)((uint8_t *)newDeque + sizeof(struct __CFArrayDeque));
+
+        CFIndex oldL = L;
+        CFIndex newL = (capacity - futureCnt) / 2;
+        CFIndex oldC0 = oldL + A + B;
+        CFIndex newC0 = newL + A + newCount;
+        newDeque-&gt;_leftIdx = newL;
+        newDeque-&gt;_capacity = capacity;
+        if (0 &lt; A) objc_memmove_collectable(newBuckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));
+        if (0 &lt; C) objc_memmove_collectable(newBuckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));
+        __CFAssignWithWriteBarrier((void **)&amp;array-&gt;_store, (void *)newDeque);
+        if (!collectableMemory &amp;&amp; deque) CFAllocatorDeallocate(allocator, deque);
+        if (CF_IS_COLLECTABLE_ALLOCATOR(allocator)) auto_zone_release(objc_collectableZone(), newDeque);
+        //printf(&quot;3:  array %p store is now %p (%lx)\n&quot;, array, array-&gt;_store, *(unsigned long *)(array-&gt;_store));
+        return;
+    }
+    /**
+     *  numNewElems &lt; 0 说明数据变少了，看是A小还是C小，memmove两者小的那块区域即可
+     *  numNewElems &gt; 0 说明数据变多了，如果A &gt; C 且 C下面的R区域够大就memmove C区域即可， C &lt; A 且上面的L区域够大就memmove A区域即可
+     *  numNewElems &gt; 0 且不符合上述规则， 需要根据具体情况同时移动A、C区域
+     */
+
+    if ((numNewElems &lt; 0 &amp;&amp; C &lt; A) || (numNewElems &lt;= R &amp;&amp; C &lt; A)) {    // move C
+        // deleting: C is smaller
+        // inserting: C is smaller and R has room
+        CFIndex oldC0 = L + A + B;
+        CFIndex newC0 = L + A + newCount;
+        if (0 &lt; C) objc_memmove_collectable(buckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));
+        // GrP GC: zero-out newly exposed space on the right, if any
+        if (oldC0 &gt; newC0) memset(buckets + newC0 + C, 0, (oldC0 - newC0) * sizeof(struct __CFArrayBucket));
+    } else if ((numNewElems &lt; 0) || (numNewElems &lt;= L &amp;&amp; A &lt;= C)) {    // move A
+        // deleting: A is smaller or equal (covers remaining delete cases)
+        // inserting: A is smaller and L has room
+        CFIndex oldL = L;
+        CFIndex newL = L - numNewElems;
+        deque-&gt;_leftIdx = newL;
+        if (0 &lt; A) objc_memmove_collectable(buckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));
+        // GrP GC: zero-out newly exposed space on the left, if any
+        if (newL &gt; oldL) memset(buckets + oldL, 0, (newL - oldL) * sizeof(struct __CFArrayBucket));
+    } else {
+        // now, must be inserting, and either:
+        //    A&lt;=C, but L doesn&#39;t have room (R might have, but don&#39;t care)
+        //    C&lt;A, but R doesn&#39;t have room (L might have, but don&#39;t care)
+        // re-center everything
+        CFIndex oldL = L;
+        CFIndex newL = (L + R - numNewElems) / 2;
+        newL = newL - newL / 2;
+        CFIndex oldC0 = oldL + A + B;
+        CFIndex newC0 = newL + A + newCount;
+        deque-&gt;_leftIdx = newL;
+        if (newL &lt; oldL) {
+            if (0 &lt; A) objc_memmove_collectable(buckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));
+            if (0 &lt; C) objc_memmove_collectable(buckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));
+            // GrP GC: zero-out newly exposed space on the right, if any
+            if (oldC0 &gt; newC0) memset(buckets + newC0 + C, 0, (oldC0 - newC0) * sizeof(struct __CFArrayBucket));
+        } else {
+            if (0 &lt; C) objc_memmove_collectable(buckets + newC0, buckets + oldC0, C * sizeof(struct __CFArrayBucket));
+            if (0 &lt; A) objc_memmove_collectable(buckets + newL, buckets + oldL, A * sizeof(struct __CFArrayBucket));
+            // GrP GC: zero-out newly exposed space on the left, if any
+            if (newL &gt; oldL) memset(buckets + oldL, 0, (newL - oldL) * sizeof(struct __CFArrayBucket));
+        }
+    }   
+}
+</code></pre>
 <p>可以看出苹果在这块还是有做比较多的优化的，大致讲下的思路：</p>
 <ul>
 <li>首先根据是否要创建空间分为两种情况：需要分配新内存、不需要分配新内存<ul>
@@ -543,7 +1157,13 @@
   </div>
 </footer>
     </div>
-    <script>
+    <!--prettify代码高亮脚本引入  <script>-->
+<script src="/plugins/prettify/prettify.js"></script>
+<script type="text/javascript">
+	$(window).load(function(){
+		$('pre').addClass('prettyprint linenums').attr('style', 'overflow:auto;');
+ 		prettyPrint();
+	})
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
@@ -609,6 +1229,10 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">生活</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">iOS</a>
               </li>
              
@@ -618,10 +1242,6 @@
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">源码解析</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">生活</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -645,11 +1265,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">总结</a>
+                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
+                <a href="javascript:void(0)" class="js-tag color3">总结</a>
               </li>
             
             <div class="clearfix"></div>

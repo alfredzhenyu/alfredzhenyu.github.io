@@ -5,7 +5,8 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">
+  <!--prettify代码高亮主题css引入 <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">  -->
+  <link href="/plugins/prettify/prettify.css" rel="stylesheet">
   <title>《Web性能权威指南》读书笔记(一) | Alfredzhenyu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="目录：
@@ -227,7 +228,9 @@
 </ul>
 <blockquote>
 <p>现在 TCP 窗口缩放机制在所有主要平台上都是默认启用的。不过，中间节点和 路由器可以重写，甚至完全去掉这个选项。如果你的服务器或客户端的连接不能 完全利用现有带宽，那往往该先查一查窗口大小。在 Linux 中，可以通过如下命 令检查和启用窗口缩放选项:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$&gt; sysctl net.ipv4.tcp_window_scaling</div><div class="line">$&gt; sysctl -w net.ipv4.tcp_window_scaling=1</div></pre></td></tr></table></figure>
+<pre><code class="bash">$&gt; sysctl net.ipv4.tcp_window_scaling
+$&gt; sysctl -w net.ipv4.tcp_window_scaling=1
+</code></pre>
 </blockquote>
 <h3 id="拥塞窗口"><a href="#拥塞窗口" class="headerlink" title="拥塞窗口"></a>拥塞窗口</h3><ul>
 <li><strong>拥塞窗口（cwnd）</strong>：发送端会初始化一个拥塞窗口（cwnd），但不会通告给对方。每次发送的数据都是cwnd和rwnd的最小值。</li>
@@ -241,7 +244,9 @@
 </ul>
 <blockquote>
 <p>SSR 对于那些会出现突发空闲的长周期 TCP 连接(比如 HTTP 的 keep-alive 连接)有很大的影响。因此，我们建议在服务器上禁用 SSR。在 Linux 平台，可以通过如下命令来检查和禁用 SSR:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$&gt; sysctl net.ipv4.tcp_slow_start_after_idle</div><div class="line">$&gt; sysctl -w net.ipv4.tcp_slow_start_after_idle=0</div></pre></td></tr></table></figure>
+<pre><code class="bash">$&gt; sysctl net.ipv4.tcp_slow_start_after_idle
+$&gt; sysctl -w net.ipv4.tcp_slow_start_after_idle=0
+</code></pre>
 </blockquote>
 <h3 id="拥塞预防机制"><a href="#拥塞预防机制" class="headerlink" title="拥塞预防机制"></a>拥塞预防机制</h3><ul>
 <li><p><strong>拥塞阈值(ssthresh)窗口</strong>：慢启动以保守的窗口初始化连接，随后的 每次往返都会成倍提高传输的数据量，直到超过接收端的流量控制窗口，即系统 配置的拥塞阈值(ssthresh)窗口，或者有分组丢失为止，此时拥塞预防算法介入</p>
@@ -462,7 +467,13 @@
   </div>
 </footer>
     </div>
-    <script>
+    <!--prettify代码高亮脚本引入  <script>-->
+<script src="/plugins/prettify/prettify.js"></script>
+<script type="text/javascript">
+	$(window).load(function(){
+		$('pre').addClass('prettyprint linenums').attr('style', 'overflow:auto;');
+ 		prettyPrint();
+	})
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
@@ -528,6 +539,10 @@
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">生活</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">iOS</a>
               </li>
              
@@ -537,10 +552,6 @@
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">源码解析</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">生活</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -564,11 +575,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">总结</a>
+                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
+                <a href="javascript:void(0)" class="js-tag color3">总结</a>
               </li>
             
             <div class="clearfix"></div>

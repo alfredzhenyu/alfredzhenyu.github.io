@@ -5,7 +5,8 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">
+  <!--prettify代码高亮主题css引入 <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">  -->
+  <link href="/plugins/prettify/prettify.css" rel="stylesheet">
   <title>Objc的Runtime源码解读（二）之方法的存储 | Alfredzhenyu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="目录：
@@ -201,28 +202,75 @@ class_rw_t和class_ro_t结构体
 </ul>
 <a id="more"></a>
 <h2 id="class-data-bits-结构体"><a href="#class-data-bits-结构体" class="headerlink" title="class_data_bits 结构体"></a><code>class_data_bits</code> 结构体</h2><p>正如上篇文章提到的一样，方法储存在<code>obj_class</code>的<code>class_data_bits</code>类型的结构体里</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> objc_class : objc_object &#123;</div><div class="line">    <span class="keyword">isa_t</span> isa;</div><div class="line">    Class superclass;</div><div class="line">    <span class="keyword">cache_t</span> cache;             <span class="comment">// formerly cache pointer and vtable</span></div><div class="line">    <span class="keyword">class_data_bits_t</span> bits;    <span class="comment">// class_rw_t * plus custom rr/alloc flags</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<pre><code class="c">struct objc_class : objc_object {
+    isa_t isa;
+    Class superclass;
+    cache_t cache;             // formerly cache pointer and vtable
+    class_data_bits_t bits;    // class_rw_t * plus custom rr/alloc flags
+};
+</code></pre>
 <p><code>class_data_bits</code> 结构体：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">class_data_bits_t</span> &#123;</div><div class="line">    <span class="keyword">uintptr_t</span> bits;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="c">struct class_data_bits_t {
+    uintptr_t bits;
+}
+</code></pre>
 <p>下面我们来看下这里的bits每一位的含义：</p>
 <p>注意到在objc_class注释里写的 <code>class_data_bits_t</code> 相当于 <code>class_rw_t</code> 指针加上 rr/alloc 的标志。而在<code>class_data_bits_t</code>的方法中可以看到下面这个方法便捷的返回<code>class_rw_t *</code> 指针</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// data pointer</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FAST_DATA_MASK          0x00007ffffffffff8UL</span></div><div class="line"><span class="keyword">class_rw_t</span>* data() &#123;</div><div class="line">   <span class="keyword">return</span> (<span class="keyword">class_rw_t</span> *)(bits &amp; FAST_DATA_MASK);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<pre><code class="c">// data pointer
+#define FAST_DATA_MASK          0x00007ffffffffff8UL
+class_rw_t* data() {
+   return (class_rw_t *)(bits &amp; FAST_DATA_MASK);
+}
+</code></pre>
 <p>可以看出 <code>class_rw_t *</code> 指针的地址从第3到第47位</p>
 <p><img src="objc-method-class_data_bits_t.png" alt=""></p>
 <p>而bits的其他位：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#define FAST_IS_SWIFT           (1UL&lt;&lt;0)</div><div class="line">#define FAST_HAS_DEFAULT_RR     (1UL&lt;&lt;1)</div><div class="line">#define FAST_REQUIRES_RAW_ISA   (1UL&lt;&lt;2)</div><div class="line">#define FAST_DATA_MASK          0x00007ffffffffff8UL</div></pre></td></tr></table></figure>
+<pre><code class="c">#define FAST_IS_SWIFT           (1UL&lt;&lt;0)
+#define FAST_HAS_DEFAULT_RR     (1UL&lt;&lt;1)
+#define FAST_REQUIRES_RAW_ISA   (1UL&lt;&lt;2)
+#define FAST_DATA_MASK          0x00007ffffffffff8UL
+</code></pre>
 <ul>
 <li><code>isSwift()``FAST_IS_SWIFT</code> 用于判断 Swift 类</li>
 <li><code>hasDefaultRR()``FAST_HAS_DEFAULT_RR</code> 当前类或者父类含有默认的 <code>retain/release/autorelease/retainCount/_tryRetain/_isDeallocating/retainWeakReference/allowsWeakReference</code> 方法</li>
 <li><code>requiresRawIsa()``FAST_REQUIRES_RAW_ISA</code> 当前类的实例需要 raw <code>isa</code></li>
 </ul>
 <p>注：通过 <code>objc_class</code> 中的 <code>data()</code> 方法和 <code>class_data_bits_t</code> 中的 <code>data()</code> 方法返回的是同一个<code>class_rw_t *</code>指针</p>
-<h2 id="class-rw-t和class-ro-t结构体"><a href="#class-rw-t和class-ro-t结构体" class="headerlink" title="class_rw_t和class_ro_t结构体"></a><code>class_rw_t</code>和<code>class_ro_t</code>结构体</h2><h3 id="class-rw-t源码"><a href="#class-rw-t源码" class="headerlink" title="class_rw_t源码"></a><code>class_rw_t</code>源码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">class_rw_t</span> &#123;</div><div class="line">    <span class="keyword">uint32_t</span> flags;</div><div class="line">    <span class="keyword">uint32_t</span> version;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">class_ro_t</span> *ro;</div><div class="line"></div><div class="line">    <span class="keyword">method_array_t</span> methods;</div><div class="line">    <span class="keyword">property_array_t</span> properties;</div><div class="line">    <span class="keyword">protocol_array_t</span> protocols;</div><div class="line"></div><div class="line">    Class firstSubclass;</div><div class="line">    Class nextSiblingClass;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h2 id="class-rw-t和class-ro-t结构体"><a href="#class-rw-t和class-ro-t结构体" class="headerlink" title="class_rw_t和class_ro_t结构体"></a><code>class_rw_t</code>和<code>class_ro_t</code>结构体</h2><h3 id="class-rw-t源码"><a href="#class-rw-t源码" class="headerlink" title="class_rw_t源码"></a><code>class_rw_t</code>源码</h3><pre><code class="c">struct class_rw_t {
+    uint32_t flags;
+    uint32_t version;
+
+    const class_ro_t *ro;
+
+    method_array_t methods;
+    property_array_t properties;
+    protocol_array_t protocols;
+
+    Class firstSubclass;
+    Class nextSiblingClass;
+};
+</code></pre>
 <p>可以看到:</p>
 <p>这里面存储着属性(properties)、方法(methods)、遵循的协议(protocols)</p>
 <p>同时这内部还有一个指针叫做<code>ro</code>，类型为<code>class_ro_t</code></p>
 <p>我们再来看下<code>class_ro_t</code>的源码</p>
-<h3 id="class-ro-t源码"><a href="#class-ro-t源码" class="headerlink" title="class_ro_t源码"></a><code>class_ro_t</code>源码</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">class_ro_t</span> &#123;</div><div class="line">    <span class="keyword">uint32_t</span> flags;</div><div class="line">    <span class="keyword">uint32_t</span> instanceStart;</div><div class="line">    <span class="keyword">uint32_t</span> instanceSize;</div><div class="line">    <span class="keyword">uint32_t</span> reserved;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">uint8_t</span> * ivarLayout;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> * name;</div><div class="line">    <span class="keyword">method_list_t</span> * baseMethodList;</div><div class="line">    <span class="keyword">protocol_list_t</span> * baseProtocols;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">ivar_list_t</span> * ivars;</div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">uint8_t</span> * weakIvarLayout;</div><div class="line">    <span class="keyword">property_list_t</span> *baseProperties;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="class-ro-t源码"><a href="#class-ro-t源码" class="headerlink" title="class_ro_t源码"></a><code>class_ro_t</code>源码</h3><pre><code class="c">struct class_ro_t {
+    uint32_t flags;
+    uint32_t instanceStart;
+    uint32_t instanceSize;
+    uint32_t reserved;
+
+    const uint8_t * ivarLayout;
+
+    const char * name;
+    method_list_t * baseMethodList;
+    protocol_list_t * baseProtocols;
+    const ivar_list_t * ivars;
+
+    const uint8_t * weakIvarLayout;
+    property_list_t *baseProperties;
+};
+</code></pre>
 <p>发现这两个有点像也有属性、方法、协议</p>
 <p>从字面上就可以理解这两个的差别：</p>
 <ul>
@@ -231,7 +279,12 @@ class_rw_t和class_ro_t结构体
 </ul>
 <p>要想深入理解方法的存储可以看下<code>class_ro_t</code>和 <code>class_rw_t</code>在加载ObjC运行时是怎么调用的，可以找到 <code>realizeClass</code> 这个方法</p>
 <h3 id="从realizeClass看方法的存储"><a href="#从realizeClass看方法的存储" class="headerlink" title="从realizeClass看方法的存储"></a>从<code>realizeClass</code>看方法的存储</h3><p>主要看下方法内部<code>class_ro_t</code>和 <code>class_rw_t</code>相关的部分：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">const</span> <span class="keyword">class_ro_t</span> *ro = (<span class="keyword">const</span> <span class="keyword">class_ro_t</span> *)cls-&gt;data();</div><div class="line"><span class="keyword">class_rw_t</span> *rw = (<span class="keyword">class_rw_t</span> *)<span class="built_in">calloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">class_rw_t</span>), <span class="number">1</span>);</div><div class="line">rw-&gt;ro = ro;</div><div class="line">rw-&gt;flags = RW_REALIZED|RW_REALIZING;</div><div class="line">cls-&gt;setData(rw);</div></pre></td></tr></table></figure>
+<pre><code class="c++">const class_ro_t *ro = (const class_ro_t *)cls-&gt;data();
+class_rw_t *rw = (class_rw_t *)calloc(sizeof(class_rw_t), 1);
+rw-&gt;ro = ro;
+rw-&gt;flags = RW_REALIZED|RW_REALIZING;
+cls-&gt;setData(rw);
+</code></pre>
 <p>主要的步骤：</p>
 <ol>
 <li>从 <code>class_data_bits_t</code> 调用 <code>data</code> 方法，将结果从 <code>class_rw_t</code> 强制转换为 <code>class_ro_t</code> 指针</li>
@@ -256,13 +309,40 @@ class_rw_t和class_ro_t结构体
 <li>分配可读写数据空间（<code>class_rw_t</code>）</li>
 <li>返回真正的类结构（<code>Class</code>）</li>
 </ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> Class <span class="title">realizeClass</span><span class="params">(Class cls)</span></span></div></pre></td></tr></table></figure>
+<pre><code class="c">static Class realizeClass(Class cls)
+</code></pre>
 <h2 id="相关源码"><a href="#相关源码" class="headerlink" title="相关源码"></a>相关源码</h2><blockquote>
 <p>TODO:补充相关代码解析注释</p>
 </blockquote>
-<h3 id="方法结构体"><a href="#方法结构体" class="headerlink" title="方法结构体"></a>方法结构体</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">method_t</span> &#123;</div><div class="line">    SEL name;<span class="comment">//方法名</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *types;<span class="comment">//在ObjC中叫做类型编码(Type Encoding)</span></div><div class="line">    IMP imp;<span class="comment">//实现的指针</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<h3 id="属性结构体"><a href="#属性结构体" class="headerlink" title="属性结构体"></a>属性结构体</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">property_t</span> &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *attributes;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<h3 id="协议结构体"><a href="#协议结构体" class="headerlink" title="协议结构体"></a>协议结构体</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="keyword">protocol_t</span> : objc_object &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *mangledName;</div><div class="line">    <span class="keyword">struct</span> <span class="keyword">protocol_list_t</span> *protocols;</div><div class="line">    <span class="keyword">method_list_t</span> *instanceMethods;</div><div class="line">    <span class="keyword">method_list_t</span> *classMethods;</div><div class="line">    <span class="keyword">method_list_t</span> *optionalInstanceMethods;</div><div class="line">    <span class="keyword">method_list_t</span> *optionalClassMethods;</div><div class="line">    <span class="keyword">property_list_t</span> *instanceProperties;</div><div class="line">    <span class="keyword">uint32_t</span> size;   <span class="comment">// sizeof(protocol_t)</span></div><div class="line">    <span class="keyword">uint32_t</span> flags;</div><div class="line">    <span class="comment">// Fields below this point are not always present on disk.</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> **_extendedMethodTypes;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *_demangledName;</div><div class="line">    <span class="keyword">property_list_t</span> *_classProperties;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">const</span> <span class="keyword">char</span> *<span class="title">demangledName</span><span class="params">()</span></span>;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="方法结构体"><a href="#方法结构体" class="headerlink" title="方法结构体"></a>方法结构体</h3><pre><code class="c">struct method_t {
+    SEL name;//方法名
+    const char *types;//在ObjC中叫做类型编码(Type Encoding)
+    IMP imp;//实现的指针
+};
+</code></pre>
+<h3 id="属性结构体"><a href="#属性结构体" class="headerlink" title="属性结构体"></a>属性结构体</h3><pre><code class="c">struct property_t {
+    const char *name;
+    const char *attributes;
+};
+</code></pre>
+<h3 id="协议结构体"><a href="#协议结构体" class="headerlink" title="协议结构体"></a>协议结构体</h3><pre><code class="c">struct protocol_t : objc_object {
+    const char *mangledName;
+    struct protocol_list_t *protocols;
+    method_list_t *instanceMethods;
+    method_list_t *classMethods;
+    method_list_t *optionalInstanceMethods;
+    method_list_t *optionalClassMethods;
+    property_list_t *instanceProperties;
+    uint32_t size;   // sizeof(protocol_t)
+    uint32_t flags;
+    // Fields below this point are not always present on disk.
+    const char **_extendedMethodTypes;
+    const char *_demangledName;
+    property_list_t *_classProperties;
+
+    const char *demangledName();
+};
+</code></pre>
 <p>​</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
 <li><a href="https://github.com/Draveness/iOS-Source-Code-Analyze/blob/master/contents/objc/%E4%BB%8E%20NSObject%20%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BA%86%E8%A7%A3%20isa.md#ISA" target="_blank" rel="external">Draveness的github</a></li>
@@ -467,7 +547,13 @@ class_rw_t和class_ro_t结构体
   </div>
 </footer>
     </div>
-    <script>
+    <!--prettify代码高亮脚本引入  <script>-->
+<script src="/plugins/prettify/prettify.js"></script>
+<script type="text/javascript">
+	$(window).load(function(){
+		$('pre').addClass('prettyprint linenums').attr('style', 'overflow:auto;');
+ 		prettyPrint();
+	})
 	var yiliaConfig = {
 		mathjax: false,
 		isHome: false,
@@ -533,6 +619,10 @@ class_rw_t和class_ro_t结构体
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">生活</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">iOS</a>
               </li>
              
@@ -542,10 +632,6 @@ class_rw_t和class_ro_t结构体
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">源码解析</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">生活</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -569,11 +655,11 @@ class_rw_t和class_ro_t结构体
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">总结</a>
+                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
+                <a href="javascript:void(0)" class="js-tag color3">总结</a>
               </li>
             
             <div class="clearfix"></div>
