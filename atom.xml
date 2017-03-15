@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://alfredzhenyu.github.io/"/>
-  <updated>2017-02-17T08:26:35.000Z</updated>
+  <updated>2017-03-15T06:57:52.000Z</updated>
   <id>http://alfredzhenyu.github.io/</id>
   
   <author>
@@ -16,11 +16,140 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>在Mac下用Xcode8编译libtorrent库</title>
+    <link href="http://alfredzhenyu.github.io/2017/03/15/%E5%9C%A8Mac%E4%B8%8B%E7%94%A8Xcode%E7%BC%96%E8%AF%91libtorrent%E5%BA%93/"/>
+    <id>http://alfredzhenyu.github.io/2017/03/15/在Mac下用Xcode编译libtorrent库/</id>
+    <published>2017-03-15T02:28:43.000Z</published>
+    <updated>2017-03-15T06:57:52.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们让人欣慰的。不过现在更喜欢把这些东西记录下来，以后回顾起来也方便，也方便别人。</p>
+<p>今天要编译的是<a href="http://www.rasterbar.com/products/libtorrent/index.html" target="_blank" rel="external">rasterbar的libtorrent</a></p>
+<p>github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：</p>
+<p><a href="http://blog.chinaunix.net/uid-736168-id-375924.html" target="_blank" rel="external">两个libtorrent库的区别</a></p>
+<a id="more"></a>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>libtorrent本身依赖OpenSSL、boost两个库，所以要编译这两个库</p>
+<h3 id="编译OpenSSL"><a href="#编译OpenSSL" class="headerlink" title="编译OpenSSL"></a>编译OpenSSL</h3><ol>
+<li><p>直接上github，下载源码：<a href="https://github.com/openssl/openssl" target="_blank" rel="external">OpenSSL</a>，我这里下载的是OpenSSL-1.1.1版本</p>
+</li>
+<li><p>如果不是clone的话，下载的是压缩包需要解压</p>
+</li>
+<li><p>终端cd到下载下来的文件夹目录内</p>
+</li>
+<li><p>依次执行以下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ ./Configure darwin64-x86_64-cc </div><div class="line">$ make</div><div class="line">$ make test</div><div class="line">$ make install</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这些指令执行过程中也出现过错误，但当时很快就解决了，所以没截屏记下来，要是有问题的可以在下面留言。</p>
+<h3 id="编译boost"><a href="#编译boost" class="headerlink" title="编译boost"></a>编译boost</h3><p>boost库其实已经不是第一次用到了，C++的一个很牛逼的库，光看大小就很牛逼，源代码就上百M，执行完编译指令，打包库等操作之后文件夹上1点多G，所以在项目中要使用到boost的话，能分离代码就分离吧。</p>
+<p>其实编译boost有很多方法，可以直接通过brew或者Macport等工具来搞，我这里其实也是对源码比较感兴趣，所以特意用比较原始的方法：</p>
+<ol>
+<li><p>直接下载<a href="http://www.boost.org/" target="_blank" rel="external">boost库</a>，我这里下载的是1.63版本</p>
+</li>
+<li><p>下载完后解压</p>
+</li>
+<li><p>打开终端cd到对应的目录</p>
+</li>
+<li><p>执行以下命令（需要的时间有点久，可以喝杯咖啡先）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ ./bootstrap.sh</div><div class="line">$ ./b2</div><div class="line">$ sudo ./b2 install</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>如果不出意外，安装成功的话，在终端执行以下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ open usr/local</div></pre></td></tr></table></figure>
+<p>然后会打开一个Finder文件夹</p>
+<p>找到include目录，看下有没有boost、openssl这两个文件目录</p>
+<p>找到lib目录，看下有没有libboost_xxx相关的.a文件</p>
+<p>如果都正常的话，应该没什么大问题</p>
+<hr>
+<p><strong>还有一种比较通用的检查方式：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ open usr/local/opt</div></pre></td></tr></table></figure>
+<p><strong>这里面安装了所有你编译过的库，这就包括了boost、openssl以及后面编译成功的libtorrent，以后你如果要编译别的库比如protobuf这类的库也是需要各种依赖，你就可以来这个目录查一下是否有编译过，不然就只能傻傻地一个个试</strong></p>
+<h2 id="libtorrent编译"><a href="#libtorrent编译" class="headerlink" title="libtorrent编译"></a>libtorrent编译</h2><ol>
+<li><p>上官网下载<a href="http://www.libtorrent.org/index.html" target="_blank" rel="external">libtorrent</a></p>
+</li>
+<li><p>下载完成后直接解压</p>
+</li>
+<li><p>执行以下命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ ./configure --disable-debug</div><div class="line">$ make clean</div><div class="line">$ make</div><div class="line">$ sudo make install</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>如果不出意外的话现在就可以用以上的方法查看到libtorrent的身影</p>
+<h3 id="libtorrent下的Hello-world"><a href="#libtorrent下的Hello-world" class="headerlink" title="libtorrent下的Hello world"></a>libtorrent下的Hello world</h3><ol>
+<li>新建一个Xcode C++的Command Line Tool项目</li>
+<li>然后点击项目工程-Build Settings</li>
+<li>找到以下字段添加一条记录</li>
+</ol>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="attr">HEADER_SEARCH_PATHS</span> =  /usr/local/include</div><div class="line"><span class="attr">LIBRARY_SEARCH_PATHS</span> = /usr/local/lib</div></pre></td></tr></table></figure>
+<p>（特意写成.xconfig的格式，方便使用xconfig管理系统配置项的同志们）</p>
+<ol>
+<li>把libtorrent的examples目录下的文件拖进来编译</li>
+<li>…网上大多的资料基本写到这就完了，但是有很多奇奇怪怪的错误啊…..boost的libtorrent的…这里主要讲下我遇到的几个错误</li>
+</ol>
+<h3 id="错误分析"><a href="#错误分析" class="headerlink" title="错误分析"></a>错误分析</h3><ul>
+<li>boost的system函数没找到</li>
+</ul>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">Undefined</span> <span class="selector-tag">symbols</span> <span class="selector-tag">for</span> <span class="selector-tag">architecture</span> <span class="selector-tag">x86_64</span>:</div><div class="line">  "<span class="selector-tag">boost</span><span class="selector-pseudo">::system</span><span class="selector-pseudo">::system_category()"</span>, <span class="selector-tag">referenced</span> <span class="selector-tag">from</span>:</div><div class="line">      <span class="selector-tag">boost</span><span class="selector-pseudo">::asio</span><span class="selector-pseudo">::error</span><span class="selector-pseudo">::get_system_category()</span> <span class="selector-tag">in</span> <span class="selector-tag">http_seed_connection</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span><span class="selector-class">.5</span> <span class="selector-tag">in</span> <span class="selector-tag">http_seed_connection</span><span class="selector-class">.o</span></div><div class="line">      <span class="selector-tag">boost</span><span class="selector-pseudo">::asio</span><span class="selector-pseudo">::error</span><span class="selector-pseudo">::get_system_category()</span> <span class="selector-tag">in</span> <span class="selector-tag">metadata_transfer</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span><span class="selector-class">.2</span> <span class="selector-tag">in</span> <span class="selector-tag">metadata_transfer</span><span class="selector-class">.o</span></div><div class="line">      <span class="selector-tag">boost</span><span class="selector-pseudo">::asio</span><span class="selector-pseudo">::error</span><span class="selector-pseudo">::get_system_category()</span> <span class="selector-tag">in</span> <span class="selector-tag">gzip</span><span class="selector-class">.o</span></div><div class="line">      <span class="selector-tag">boost</span><span class="selector-pseudo">::system</span><span class="selector-pseudo">::error_code</span><span class="selector-pseudo">::clear()</span> <span class="selector-tag">in</span> <span class="selector-tag">gzip</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span><span class="selector-class">.2</span> <span class="selector-tag">in</span> <span class="selector-tag">gzip</span><span class="selector-class">.o</span></div><div class="line">      ...</div><div class="line">  "<span class="selector-tag">boost</span><span class="selector-pseudo">::system</span><span class="selector-pseudo">::generic_category()"</span>, <span class="selector-tag">referenced</span> <span class="selector-tag">from</span>:</div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span><span class="selector-class">.3</span> <span class="selector-tag">in</span> <span class="selector-tag">http_seed_connection</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span><span class="selector-class">.4</span> <span class="selector-tag">in</span> <span class="selector-tag">http_seed_connection</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span> <span class="selector-tag">in</span> <span class="selector-tag">metadata_transfer</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span><span class="selector-class">.1</span> <span class="selector-tag">in</span> <span class="selector-tag">metadata_transfer</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span> <span class="selector-tag">in</span> <span class="selector-tag">gzip</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span><span class="selector-class">.1</span> <span class="selector-tag">in</span> <span class="selector-tag">gzip</span><span class="selector-class">.o</span></div><div class="line">      ___<span class="selector-tag">cxx_global_var_init</span> <span class="selector-tag">in</span> <span class="selector-tag">disk_io_job</span><span class="selector-class">.o</span></div><div class="line">      ...</div><div class="line"><span class="selector-tag">ld</span>: <span class="selector-tag">symbol</span>(<span class="selector-tag">s</span>) <span class="selector-tag">not</span> <span class="selector-tag">found</span> <span class="selector-tag">for</span> <span class="selector-tag">architecture</span> <span class="selector-tag">x86_64</span></div></pre></td></tr></table></figure>
+<p>解决方法：</p>
+<p>刚刚编译好的boost目录下有个stage目录，然后在lib下找到libboost_system.a，直接通过Linked Frameworks and Libraries - add another添加进项目中</p>
+<ul>
+<li>libtorrent的函数没找到</li>
+</ul>
+<figure class="highlight sqf"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line">Undefined symbols <span class="keyword">for</span> architecture x86_64:</div><div class="line">  <span class="string">"libtorrent::print_entry(libtorrent::bdecode_node const&amp;, bool, int)"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::bdecode_node::clear()"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::bdecode_node::bdecode_node()"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::torrent_info::torrent_info(libtorrent::bdecode_node const&amp;, boost::system::error_code&amp;, int)"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::torrent_info::~torrent_info()"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::make_magnet_uri(libtorrent::torrent_info const&amp;)"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::to_hex(char const*, int, char*)"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::to_hex(std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt; const&amp;)"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::bdecode(char const*, char const*, libtorrent::bdecode_node&amp;, boost::system::error_code&amp;, int*, int, int)"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::file_flags(int) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::file_offset(int) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::hash(int) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::mtime(int) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::symlink(int) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::map_file(int, long long, int) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::file_path(int, std::__1::basic_string&lt;char, std::__1::char_traits&lt;char&gt;, std::__1::allocator&lt;char&gt; &gt; const&amp;) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">  <span class="string">"libtorrent::file_storage::file_size(int) const"</span>, referenced <span class="keyword">from</span>:</div><div class="line">      <span class="variable">_main</span> <span class="built_in">in</span> dump_torrent.o</div><div class="line">ld: symbol(s) <span class="built_in">not</span> found <span class="keyword">for</span> architecture x86_64</div></pre></td></tr></table></figure>
+<p>解决方法：</p>
+<p>其实我感觉应该是我之前的流程出现问题，不过与其去检查每个报错以及之前的编译流程，网上很多解释都是基于windows下VS的、很少基于mac下Xcode的资料，有的话也因为不同库编译版本不同产生的不同错误。</p>
+<p>我这里解决方案是倒不如直接把源码添加到工程里去，这样也方便学习、源码的阅读。</p>
+<p>主要是把3个文件夹下的代码添加进工程里去：</p>
+<ul>
+<li><code>include/libtorrent</code>下的代码（主要是头文件hpp）</li>
+<li><code>src</code>下的代码（主要是内部源码文件cpp）</li>
+<li><code>ed25519/src</code>下的代码（cpp、hpp）</li>
+</ul>
+<p>注：</p>
+<ul>
+<li><p>运行过之前的命令之后，上述源码目录会生成一堆<code>.lo</code>、<code>.o</code>文件，这些都是不需要的，最好直接重新解压一份源码，取出需要的目录添加到工程。</p>
+</li>
+<li><p>需要注意的是最好先重新命好名之后再copy进项目里，不然两个<code>src</code>拖进工程里去会产生冲突</p>
+<p>​</p>
+</li>
+</ul>
+<p>截至目前，其实编译工作就基本完成的了。</p>
+<p>运行Xcode，输出系统自带的Hello world，工作完成。</p>
+<p>可以把原生的<code>main.cpp</code>方法改成<code>examples</code>目录下的其他cpp文件进行学习</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这里主要针对经历过最后这两类错误的人，如果前面步骤本身没问题的话，大可以忽略掉我后面的错误处理。如果一样遇到我这样的问题，可以按照我的步骤去做。</p>
+<p>原理呢大致如下：</p>
+<ol>
+<li>首先不知道boost库指令编译过程到底哪里出问题，system的库无法识别，只能手动添加进工程里</li>
+<li>libtorrent因为没链接成功，这里直接放到程序里一起编译</li>
+<li>那么Xcode上配置的header path、library path链接的主要就是boost其他的库</li>
+</ol>
+<p>这个工程有可能并不完美，我没有去解决系统或者指令的一些冲突问题，但现在这样也特别适合学习，首先boost、openssl这些库我们可以不用全部代码拉进工程里去编译（直接Xcode编译boost要很久，很不好管理，谁试谁知道），同时libtorrent作为我们主要使用的库，我可以直接放在工程里，随时查看内部的实现或者坑，改起来也比较容易。</p>
+<p>需要学习的要源码的可以评论下，后续有时间我会把代码提交到github上，之前清过一遍github所以比较空，后续考虑重新搞起来</p>
+<hr>
+<p><center> <strong>——Nothing is true, Everything is permitted</strong></center></p>
+<p>(原谅我最近被Assassins Creed电影圈粉了…….hhh)</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;前言&quot;&gt;&lt;a href=&quot;#前言&quot; class=&quot;headerlink&quot; title=&quot;前言&quot;&gt;&lt;/a&gt;前言&lt;/h2&gt;&lt;p&gt;和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们让人欣慰的。不过现在更喜欢把这些东西记录下来，以后回顾起来也方便，也方便别人。&lt;/p&gt;
+&lt;p&gt;今天要编译的是&lt;a href=&quot;http://www.rasterbar.com/products/libtorrent/index.html&quot;&gt;rasterbar的libtorrent&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;http://blog.chinaunix.net/uid-736168-id-375924.html&quot;&gt;两个libtorrent库的区别&lt;/a&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="C/C++" scheme="http://alfredzhenyu.github.io/categories/C-C/"/>
+    
+    
+      <category term="C/C++" scheme="http://alfredzhenyu.github.io/tags/C-C/"/>
+    
+  </entry>
+  
+  <entry>
     <title>CoreFoundation源码解读之CFArray</title>
     <link href="http://alfredzhenyu.github.io/2017/02/07/CoreFoundation%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB%E4%B9%8BCFArray/"/>
     <id>http://alfredzhenyu.github.io/2017/02/07/CoreFoundation源码解读之CFArray/</id>
     <published>2017-02-07T13:10:17.000Z</published>
-    <updated>2017-02-17T08:26:35.000Z</updated>
+    <updated>2017-02-28T02:27:25.000Z</updated>
     
     <content type="html"><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>算是CoreFoundation源码解析的第一篇吧，之后有机会希望能做更多的源码解析，其实做这块的原因很简单，关于这块的解析还是蛮少，而作为一名iOS的开发工程师，没有比学习官方源码的方式更简单粗暴，可以从中吸取到很多内部的代码风格，与代码的技巧。</p>
 <p>以下内容我会分为几个部分：</p>
@@ -1180,28 +1309,39 @@
     <link href="http://alfredzhenyu.github.io/2016/12/22/%E8%B5%84%E6%BA%90%E7%9B%AE%E5%BD%95%E6%95%B4%E7%90%86/"/>
     <id>http://alfredzhenyu.github.io/2016/12/22/资源目录整理/</id>
     <published>2016-12-22T06:22:40.000Z</published>
-    <updated>2017-02-07T09:23:35.000Z</updated>
+    <updated>2017-03-15T07:07:54.000Z</updated>
     
     <content type="html"><![CDATA[<p>平时每天都会打开几十个网站没时间一一消化，就一直晾着越积越多，收藏夹也太多，一般塞进去就不会翻出来看，所以管理起来也是麻烦…<br>本篇就会把之前自己涉及的领域使用到的有用的学习网站汇总起来，分享给大家，也方便自己的学习管理：</p>
 <a id="more"></a>
 <h2 id="协议、网络相关"><a href="#协议、网络相关" class="headerlink" title="协议、网络相关"></a>协议、网络相关</h2><h3 id="学习网站"><a href="#学习网站" class="headerlink" title="学习网站"></a>学习网站</h3><ol>
-<li><a href="http://www.iprotocolsec.com/category/protocol-analyze/" target="_blank" rel="external">协议分析、网络安全</a></li>
-<li>​</li>
-<li>​</li>
+<li><p><a href="http://www.iprotocolsec.com/category/protocol-analyze/" target="_blank" rel="external">协议分析、网络安全</a></p>
+<p>​</p>
+</li>
 </ol>
 <h3 id="优秀博客"><a href="#优秀博客" class="headerlink" title="优秀博客"></a>优秀博客</h3><h2 id="OpenGL相关"><a href="#OpenGL相关" class="headerlink" title="OpenGL相关"></a>OpenGL相关</h2><h3 id="学习网站-1"><a href="#学习网站-1" class="headerlink" title="学习网站"></a>学习网站</h3><ol>
-<li><a href="https://www.zhihu.com/question/29163054" target="_blank" rel="external">通俗语言解释OpenGL中着色器，渲染管线，光栅化</a></li>
-<li>​</li>
+<li><p><a href="https://www.zhihu.com/question/29163054" target="_blank" rel="external">通俗语言解释OpenGL中着色器，渲染管线，光栅化</a></p>
+<p>​</p>
+</li>
 </ol>
 <h3 id="优秀博客-1"><a href="#优秀博客-1" class="headerlink" title="优秀博客"></a>优秀博客</h3><h2 id="iOS"><a href="#iOS" class="headerlink" title="iOS"></a>iOS</h2><h3 id="学习网站-2"><a href="#学习网站-2" class="headerlink" title="学习网站"></a>学习网站</h3><ol>
 <li><a href="https://opensource.apple.com" target="_blank" rel="external">Apple Open Source</a></li>
 <li><a href="https://developer.apple.com/reference/corefoundation?language=objc" target="_blank" rel="external">Core Foundation API</a></li>
+<li><a href="http://nshipster.com/" target="_blank" rel="external">关于OC的每周更新的外文导航网站</a></li>
+<li><a href="http://zh-google-styleguide.readthedocs.io/en/latest/google-objc-styleguide/contents/" target="_blank" rel="external">google Objective-C开源项目风格指南</a></li>
+<li><a href="http://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/headers/" target="_blank" rel="external">google C++开源项目风格指南</a></li>
+<li><a href="https://developer.apple.com/reference?changes=latest_minor&amp;language=objc" target="_blank" rel="external">iOS API Reference</a></li>
 </ol>
 <h3 id="优秀博客-2"><a href="#优秀博客-2" class="headerlink" title="优秀博客"></a>优秀博客</h3><ol>
 <li><a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="external">RunLoop解析(YYKit作者的blog)</a></li>
 <li><a href="https://github.com/Draveness/iOS-Source-Code-Analyze" target="_blank" rel="external">iOS开源代码解析</a></li>
 <li><a href="http://ciechanowski.me/blog/archives/" target="_blank" rel="external">NSArray、NSDictionary底层实现</a></li>
 <li><a href="http://tech.glowing.com/cn/" target="_blank" rel="external">Glow技术博客</a></li>
+<li><a href="http://www.cocoawithlove.com/2009/11/performance-tests-replacing-core-data.html" target="_blank" rel="external">Matt Gallagher’s blog</a></li>
+</ol>
+<h2 id="其他学习语言"><a href="#其他学习语言" class="headerlink" title="其他学习语言"></a>其他学习语言</h2><h3 id="学习网站-3"><a href="#学习网站-3" class="headerlink" title="学习网站"></a>学习网站</h3><ol>
+<li><p><a href="http://www.runoob.com/" target="_blank" rel="external">菜鸟学习网站</a></p>
+<p>​</p>
+</li>
 </ol>
 ]]></content>
     
