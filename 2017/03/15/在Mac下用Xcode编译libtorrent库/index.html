@@ -8,24 +8,24 @@
   <link rel="dns-prefetch" href="http://alfredzhenyu.github.io">
   <title>在Mac下用Xcode8编译libtorrent库 | Alfredzhenyu</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="前言和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们让人欣慰的。不过现在更喜欢把这些东西记录下来，以后回顾起来也方便，也方便别人。
-今天要编译的是rasterbar的libtorrent
-github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：
+  <meta name="description" content="前言和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们挺欣慰的。不过现在会把这些东西记录下来，以后回顾起来也方便，也方便别人。
+今天要编译的是大神rasterbar的libtorrent
+注意github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：
 两个libtorrent库的区别">
 <meta property="og:type" content="article">
 <meta property="og:title" content="在Mac下用Xcode8编译libtorrent库">
 <meta property="og:url" content="http://alfredzhenyu.github.io/2017/03/15/在Mac下用Xcode编译libtorrent库/index.html">
 <meta property="og:site_name" content="Alfredzhenyu">
-<meta property="og:description" content="前言和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们让人欣慰的。不过现在更喜欢把这些东西记录下来，以后回顾起来也方便，也方便别人。
-今天要编译的是rasterbar的libtorrent
-github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：
+<meta property="og:description" content="前言和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们挺欣慰的。不过现在会把这些东西记录下来，以后回顾起来也方便，也方便别人。
+今天要编译的是大神rasterbar的libtorrent
+注意github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：
 两个libtorrent库的区别">
-<meta property="og:updated_time" content="2017-03-15T06:57:52.000Z">
+<meta property="og:updated_time" content="2017-03-15T07:42:48.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="在Mac下用Xcode8编译libtorrent库">
-<meta name="twitter:description" content="前言和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们让人欣慰的。不过现在更喜欢把这些东西记录下来，以后回顾起来也方便，也方便别人。
-今天要编译的是rasterbar的libtorrent
-github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：
+<meta name="twitter:description" content="前言和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们挺欣慰的。不过现在会把这些东西记录下来，以后回顾起来也方便，也方便别人。
+今天要编译的是大神rasterbar的libtorrent
+注意github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：
 两个libtorrent库的区别">
   
     <link rel="alternative" href="/atom.xml" title="Alfredzhenyu" type="application/atom+xml">
@@ -186,9 +186,9 @@ var _hmt = _hmt || [];
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们让人欣慰的。不过现在更喜欢把这些东西记录下来，以后回顾起来也方便，也方便别人。</p>
-<p>今天要编译的是<a href="http://www.rasterbar.com/products/libtorrent/index.html" target="_blank" rel="external">rasterbar的libtorrent</a></p>
-<p>github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：</p>
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>和往常一样每次接触新的知识，第一步安装编译就会卡个半天，感觉别人遇到的所有问题都经历过一遍一样，但基本最后都解决了，还是们挺欣慰的。不过现在会把这些东西记录下来，以后回顾起来也方便，也方便别人。</p>
+<p>今天要编译的是大神<a href="http://www.rasterbar.com/products/libtorrent/index.html" target="_blank" rel="external">rasterbar的libtorrent</a></p>
+<p>注意github流行的有两个不同的libtorrent库，具体的区别可见👇的blog：</p>
 <p><a href="http://blog.chinaunix.net/uid-736168-id-375924.html" target="_blank" rel="external">两个libtorrent库的区别</a></p>
 <a id="more"></a>
 <h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>libtorrent本身依赖OpenSSL、boost两个库，所以要编译这两个库</p>
@@ -203,7 +203,6 @@ var _hmt = _hmt || [];
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ ./Configure darwin64-x86_64-cc </div><div class="line">$ make</div><div class="line">$ make test</div><div class="line">$ make install</div></pre></td></tr></table></figure>
 </li>
 </ol>
-<p>这些指令执行过程中也出现过错误，但当时很快就解决了，所以没截屏记下来，要是有问题的可以在下面留言。</p>
 <h3 id="编译boost"><a href="#编译boost" class="headerlink" title="编译boost"></a>编译boost</h3><p>boost库其实已经不是第一次用到了，C++的一个很牛逼的库，光看大小就很牛逼，源代码就上百M，执行完编译指令，打包库等操作之后文件夹上1点多G，所以在项目中要使用到boost的话，能分离代码就分离吧。</p>
 <p>其实编译boost有很多方法，可以直接通过brew或者Macport等工具来搞，我这里其实也是对源码比较感兴趣，所以特意用比较原始的方法：</p>
 <ol>
@@ -237,7 +236,7 @@ var _hmt = _hmt || [];
 </li>
 </ol>
 <p>如果不出意外的话现在就可以用以上的方法查看到libtorrent的身影</p>
-<h3 id="libtorrent下的Hello-world"><a href="#libtorrent下的Hello-world" class="headerlink" title="libtorrent下的Hello world"></a>libtorrent下的Hello world</h3><ol>
+<h3 id="Xcode编译libtorrent的Hello-world"><a href="#Xcode编译libtorrent的Hello-world" class="headerlink" title="Xcode编译libtorrent的Hello world"></a>Xcode编译libtorrent的Hello world</h3><ol>
 <li>新建一个Xcode C++的Command Line Tool项目</li>
 <li>然后点击项目工程-Build Settings</li>
 <li>找到以下字段添加一条记录</li>
@@ -269,7 +268,7 @@ var _hmt = _hmt || [];
 </ul>
 <p>注：</p>
 <ul>
-<li><p>运行过之前的命令之后，上述源码目录会生成一堆<code>.lo</code>、<code>.o</code>文件，这些都是不需要的，最好直接重新解压一份源码，取出需要的目录添加到工程。</p>
+<li><p>运行过之前终端命令之后，上述源码目录会生成一堆<code>.lo</code>、<code>.o</code>文件，这些都是不需要的，最好直接重新解压一份源码，取出需要的目录添加到工程。</p>
 </li>
 <li><p>需要注意的是最好先重新命好名之后再copy进项目里，不然两个<code>src</code>拖进工程里去会产生冲突</p>
 <p>​</p>
@@ -278,14 +277,14 @@ var _hmt = _hmt || [];
 <p>截至目前，其实编译工作就基本完成的了。</p>
 <p>运行Xcode，输出系统自带的Hello world，工作完成。</p>
 <p>可以把原生的<code>main.cpp</code>方法改成<code>examples</code>目录下的其他cpp文件进行学习</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这里主要针对经历过最后这两类错误的人，如果前面步骤本身没问题的话，大可以忽略掉我后面的错误处理。如果一样遇到我这样的问题，可以按照我的步骤去做。</p>
-<p>原理呢大致如下：</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>如果去掉最后这些错误分析呢，这篇文章也没有什么精髓可言，因为网上很多文章基本就只介绍正常情况，错误的很少提。</p>
+<p>关于以上的错误，我这里总结一下：</p>
 <ol>
-<li>首先不知道boost库指令编译过程到底哪里出问题，system的库无法识别，只能手动添加进工程里</li>
-<li>libtorrent因为没链接成功，这里直接放到程序里一起编译</li>
-<li>那么Xcode上配置的header path、library path链接的主要就是boost其他的库</li>
+<li>其实我也不太清除boost库用指令编译链接的过程到底哪里出问题造成system的库无法识别，所以改成手动添加进工程里</li>
+<li>libtorrent好像整个都没链接成功，这里我是直接放到程序里一起编译</li>
+<li>Xcode上配置的header path、library path链接的主要就是boost其他的库</li>
 </ol>
-<p>这个工程有可能并不完美，我没有去解决系统或者指令的一些冲突问题，但现在这样也特别适合学习，首先boost、openssl这些库我们可以不用全部代码拉进工程里去编译（直接Xcode编译boost要很久，很不好管理，谁试谁知道），同时libtorrent作为我们主要使用的库，我可以直接放在工程里，随时查看内部的实现或者坑，改起来也比较容易。</p>
+<p>这个工程有可能并不完美，我没有去解决系统或者指令的一些冲突问题，但这样也特别适合学习，首先boost、openssl这些库我们可以不用全部代码拉进工程里去编译（直接Xcode编译boost要很久，很不好管理，谁试谁知道），同时libtorrent作为我们主要使用的库，我可以直接放在工程里，随时查看内部的实现或者坑，改起来也比较容易。</p>
 <p>需要学习的要源码的可以评论下，后续有时间我会把代码提交到github上，之前清过一遍github所以比较空，后续考虑重新搞起来</p>
 <hr>
 <p><center> <strong>——Nothing is true, Everything is permitted</strong></center></p>
@@ -563,7 +562,7 @@ var _hmt = _hmt || [];
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
+                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -575,7 +574,7 @@ var _hmt = _hmt || [];
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">C/C++</a>
+                <a href="javascript:void(0)" class="js-tag color5">HTTP</a>
               </li>
              
               <li class="article-tag-list-item">
